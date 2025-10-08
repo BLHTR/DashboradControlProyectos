@@ -1,0 +1,2194 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BlatoRH - Project Analysis Dashboard</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Exo:wght@400;400;500;700&display=swap" rel="stylesheet">
+    
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+
+    <script src="https://unpkg.com/lucide@0.372.0/dist/umd/lucide.min.js"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
+
+    <style>
+        /* Aplicando la paleta de colores y tipografías de BlatoRH */
+        :root {
+            --bl-azul-oscuro: #0D2240;
+            --bl-dorado: #B1A96E;
+            --bl-azul-principal: #1A77D2;
+            --bl-blanco: #FFFFFF;
+            --bl-gris-claro: #f3f4f6;
+            --bl-gris-oscuro: #1f2937;
+        }
+
+        /* --- TEMA 2: Oceánico --- */
+        .theme-oceanic {
+            --bl-azul-oscuro: #021024;
+            --bl-dorado: #05C7F2;
+            --bl-azul-principal: #0597F2;
+        }
+        
+        /* --- TEMA 3: Contraste --- */
+        .theme-contrast {
+            --bl-azul-oscuro: #000000;
+            --bl-dorado: #F2D157; /* Corregido de F2W157 */
+            --bl-azul-principal: #FFFFFF;
+        }
+
+
+        body {
+            font-family: 'Exo', sans-serif;
+            background-color: var(--bl-azul-oscuro);
+            color: var(--bl-blanco);
+            transition: background-color 0.5s ease;
+        }
+
+        h1, h2, h3, h4, .font-display {
+            font-family: 'Bebas Neue', sans-serif;
+        }
+
+        .brand-logo {
+            color: var(--bl-blanco);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .brand-logo span {
+            color: var(--bl-dorado);
+            transition: color 0.5s ease;
+        }
+        .brand-subtitle {
+            font-family: 'Exo', sans-serif;
+            font-size: 0.8rem;
+            letter-spacing: 2px;
+            color: var(--bl-gris-claro);
+            opacity: 0.8;
+        }
+
+        .card {
+            background-color: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+        }
+        
+        /* Estilos para el fondo de partículas */
+        #particles-js {
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            z-index: -1;
+        }
+
+        /* Animación de entrada para la sección de carga */
+        #uploadSection {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.8s ease-out, transform 0.8s ease-out;
+        }
+        #uploadSection.loaded {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Estilos para la nueva zona de carga inteligente */
+        #smart-dropzone {
+            border: 2px dashed rgba(255, 255, 255, 0.2);
+            transition: all 0.3s ease;
+        }
+        #smart-dropzone.dragover {
+            border-color: var(--bl-dorado);
+            background-color: rgba(177, 169, 110, 0.1);
+            transform: scale(1.02);
+            box-shadow: 0 0 25px rgba(177, 169, 110, 0.3);
+        }
+        
+        /* Estilos para el panel de personalización */
+        #branding-panel {
+            position: fixed;
+            top: 0;
+            right: 0;
+            height: 100%;
+            width: 320px;
+            background-color: var(--bl-azul-oscuro);
+            border-left: 1px solid var(--bl-dorado);
+            z-index: 100;
+            transform: translateX(100%);
+            transition: transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            box-shadow: -10px 0 30px rgba(0,0,0,0.3);
+        }
+        #branding-panel.is-open {
+            transform: translateX(0);
+        }
+        
+        /* --- RESTO DE ESTILOS ORIGINALES (SIN CAMBIOS) --- */
+        .timeline-item::before { content: ''; position: absolute; left: 11px; top: 28px; bottom: 0; width: 2px; background-color: var(--bl-dorado); opacity: 0.5; }
+        .timeline-item:last-child::before { display: none; }
+        .timeline-dot { position: absolute; left: 0; top: 28px; height: 24px; width: 24px; border-radius: 50%; background-color: var(--bl-azul-oscuro); border: 3px solid var(--bl-dorado); z-index: 10; }
+        .timeline-dot.completed { background-color: var(--bl-dorado); border-color: var(--bl-dorado); }
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: var(--bl-azul-oscuro); }
+        ::-webkit-scrollbar-thumb { background: var(--bl-dorado); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #c9bf86; }
+        .export-btn, .action-btn { background-color: rgba(177, 169, 110, 0.1); border: 1px solid var(--bl-dorado); color: var(--bl-dorado); padding: 2px 6px; border-radius: 6px; font-size: 10px; transition: all 0.2s; display: inline-flex; align-items: center; gap: 4px; }
+        .export-btn:hover, .action-btn:hover { background-color: var(--bl-dorado); color: var(--bl-azul-oscuro); }
+        .gantt-view-btn { transition: all 0.2s; }
+        .gantt-view-btn.active { background-color: var(--bl-dorado); color: var(--bl-azul-oscuro); font-weight: bold; }
+        input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(1); opacity: 0.7; cursor: pointer; }
+        #gantt-task-list, #gantt-timeline-wrapper { max-height: 72vh; overflow-y: auto; }
+        #gantt-legend .legend-item{ display:flex; align-items:center; gap:8px; margin-bottom:6px; }
+        #gantt-legend .swatch{ width:14px; height:14px; border-radius:3px; display:inline-block; }
+        #gantt-legend .hatched{ background: repeating-linear-gradient(135deg, rgba(177,169,110,0.35), rgba(177,169,110,0.35) 6px, rgba(255,255,255,0.1) 6px, rgba(255,255,255,0.1) 12px); border:1px solid rgba(177,169,110,0.6); }
+        .gantt-progress-summary{ height:8px!important; top:5px!important; border-radius:4px!important; opacity:0.95; }
+        .gantt-percent-badge{ position:absolute; top:50%; transform: translateY(-50%); padding: 2px 6px; font-size: 11px; line-height: 1; border-radius: 10px; background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.25); color: #fff; pointer-events: none; white-space: nowrap; }
+        #gantt-timeline-wrapper { overflow: auto; }
+        #gantt-timeline { position: relative; overflow: hidden; }
+        .gantt-bar { position: absolute; height: 18px; border-radius: 6px; }
+        .gantt-bar .gantt-bar-label { position: absolute; right: 6px; top: 50%; transform: translateY(-50%); font-size: 10px; color: white; opacity: .9; }
+        .gantt-track { position:absolute; left:0; top:0; height:100%; width:100%; border-radius:6px; background-color: rgba(255, 255, 255, 0.15); }
+        .gantt-track-summary { background: repeating-linear-gradient(135deg, rgba(177,169,110,0.20), rgba(177,169,110,0.20) 6px, rgba(255,255,255,0.06) 6px, rgba(255,255,255,0.06) 12px); border: 1px solid rgba(177,169,110,0.35); }
+        .gantt-progress { position:absolute; left:0; top:0; height:100%; border-radius:6px; }
+        .gantt-progress-marker { position:absolute; top:-2px; bottom:-2px; width:2px; background: white; opacity:.9; border-radius:1px; box-shadow: 0 0 0 1px rgba(0,0,0,.25) inset; }
+        .gantt-grid { display: grid; grid-template-columns: minmax(300px, 25%) 1fr; grid-template-rows: 64px auto; }
+        .gantt-row { height: 32px; border-bottom: 1px solid rgba(255, 255, 255, 0.1); box-sizing: border-box; }
+        .gantt-task-name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .gantt-task-name.summary-task { font-weight: 500; }
+        .toggle-btn { cursor: pointer; width: 16px; height: 16px; transition: transform 0.2s; }
+        .toggle-btn.collapsed { transform: rotate(-90deg); }
+        .gantt-bar { position: absolute; height: 20px; top: 6px; border-radius: 4px; cursor: pointer; transition: filter 0.2s; }
+        .gantt-bar:hover { filter: brightness(1.2); }
+        .gantt-milestone { position: absolute; top: 8px; width: 16px; height: 16px; background-color: var(--bl-dorado); transform: rotate(45deg); cursor: pointer; }
+        .gantt-bar-label { position: absolute; left: 5px; top: 0; height: 100%; display: flex; align-items: center; color: white; font-size: 10px; white-space: nowrap; text-shadow: 0 0 2px rgba(0,0,0,0.7); pointer-events: none; }
+        #gantt-tooltip { position: fixed; display: none; background-color: var(--bl-gris-oscuro); color: var(--bl-blanco); border: 1px solid var(--bl-dorado); border-radius: 6px; padding: 8px; font-size: 12px; z-index: 100; pointer-events: none; max-width: 300px; }
+        .gantt-timeline-header { background-color: var(--bl-azul-oscuro); }
+        
+        /* Estilos para el indicador de carga IA */
+        .loading-dots:after {
+            content: ' .';
+            animation: dots 1s steps(5, end) infinite;
+        }
+        @keyframes dots {
+            0%, 20% { color: rgba(0,0,0,0); text-shadow: .25em 0 0 rgba(0,0,0,0), .5em 0 0 rgba(0,0,0,0); }
+            40% { color: #fff; text-shadow: .25em 0 0 rgba(0,0,0,0), .5em 0 0 rgba(0,0,0,0); }
+            60% { text-shadow: .25em 0 0 #fff, .5em 0 0 rgba(0,0,0,0); }
+            80%, 100% { text-shadow: .25em 0 0 #fff, .5em 0 0 #fff; }
+        }
+        
+    </style>
+
+<style id="blatorh-patch">
+/* Logo: lock box size to default and keep uploaded image contained */
+#custom-logo{
+  display:block;
+  width: var(--logo-w, 240px);
+  height: var(--logo-h, 64px);
+  object-fit: contain;
+  object-position: left center;
+}
+.brand-actions .btn{ padding:.5rem .75rem; border-radius:.5rem; border:1px solid rgba(255,255,255,.18); background:rgba(255,255,255,.08); color:#fff; }
+.brand-actions .btn:hover{ background:rgba(255,255,255,.18); }
+/* Steps state helpers */
+.card-done{ box-shadow: 0 0 0 2px #22c55e inset!important; }      /* green */
+.card-skip{ box-shadow: 0 0 0 2px #ef4444 inset!important; }      /* red */
+.dropzone{ border:2px dashed rgba(242,209,87,.7); border-radius:1rem; padding:1.25rem; }
+.dropzone--muted{ border-color: rgba(255,255,255,.22); }
+/* Ensure legacy hero is hidden (JS also reinforces) */
+[data-legacy-hero], .legacy-upload-hero{ display:none !important; }
+
+/* Estilo para input de API Key */
+#gemini-api-key-input {
+    background-color: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: var(--bl-blanco);
+    padding: 8px 12px;
+    border-radius: 6px;
+    width: 100%;
+}
+/* Estilo para el contenedor de KPI clickeable (Asistente IA) */
+.kpi-interpretable:hover {
+    cursor: pointer;
+    box-shadow: 0 0 10px rgba(177, 169, 110, 0.5);
+    transform: translateY(-2px);
+}
+</style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+    <div id="particles-js"></div>
+
+    <header class="p-6 border-b border-white/10 sticky top-0 bg-[--bl-azul-oscuro]/80 backdrop-blur-md z-50">
+        <div class="container mx-auto flex justify-between items-center">
+            <div>
+                 <h1 class="font-display text-4xl tracking-wider brand-logo">
+                    <img id="custom-logo" src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDgiIGhlaWdodD0iNDgiIHZpZXdCb3g9IjAgMCA0OCA0OCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTI0IDRDMTIuOTYgNCA0IDEyLjk2IDQgMjRDNCAzNS4wNCAxMi45NiA0NCAyNCA0NFY0WiIgZmlsbD0id2hpdGUiLz4KPHBhdGggZD0iTTI0IDRDNTIgNCAzNS4wNCA0IDI0IDQ0QzEyLjk2IDQ0IDQgMzUuMDQgNCAyNFY0SDI0WiIgZmlsbD0iI0IxQTk2RSIvPgo8L3N2Zz4K" alt="Custom Logo" class="h-10 w-10">
+                    <span id="brand-text">BlatoRH<span class="text-4xl">.</span></span>
+                </h1>
+                <p class="brand-subtitle">BUSINESS CONSULTING</p>
+            </div>
+            <div class="flex items-center gap-6">
+                <div class="text-right">
+                    <h2 class="font-display text-2xl md:text-3xl tracking-wide text-white/90">
+                        Project Analysis Dashboard
+                    </h2>
+                    <p id="report-date" class="text-xs text-white/60 h-4"></p>
+                </div>
+                <!-- Botón de exportación de Snapshot (se hace visible después de cargar datos) -->
+                <button id="export-snapshot-btn" class="text-white/80 hover:text-[--bl-dorado] transition-colors no-export hidden" title="Exportar estado actual del tablero como JSON">
+                    <i data-lucide="download" class="w-6 h-6"></i>
+                </button>
+                <button id="branding-toggle-btn" class="text-white/80 hover:text-[--bl-dorado] transition-colors no-export" title="Personalizar Branding y Configuración IA">
+                    <i data-lucide="settings-2" class="w-6 h-6"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+<section id="stepsInlinePro" class="relative z-[10] mx-auto max-w-6xl px-4 pt-8 pb-6">
+  <header class="mb-8">
+    <h2 class="text-3xl font-extrabold tracking-tight text-white">Cargar datos del proyecto</h2>
+    <p class="text-white/80 text-base mt-1">
+      1) XML <strong>actual</strong> (obligatorio) — base de KPIs y Gantt ·
+      2) XML <strong>anterior</strong> (opcional) — comparativas y tendencias ·
+      3) <strong>Generar</strong> el dashboard.
+    </p>
+  </header>
+  <ol class="grid grid-cols-1 md:grid-cols-3 gap-6">
+    <li id="inStep1" class="rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl p-6 ring-0 transition-all min-h-[300px]">
+      <div class="flex items-start justify-between gap-3">
+        <div class="flex items-center gap-3">
+          <svg width="30" height="30" viewBox="0 0 24 24" fill="none"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6z" stroke="currentColor" class="text-[color:var(--bl-dorado,var(--brand-accent,#F2D157))]" stroke-width="1.5"/><path d="M14 2v6h6" stroke="currentColor" stroke-width="1.5"/></svg>
+          <div>
+            <div class="text-xl font-semibold text-white">1. Archivo Actual</div>
+            <div class="text-xs text-white/70 -mt-0.5">Obligatorio · base de KPIs y Gantt</div>
+          </div>
+        </div>
+        <span id="inS1State" class="text-[11px] rounded px-2 py-0.5 bg-white/10 text-white/70">en curso</span>
+      </div>
+      <div id="drop1" class="dropzone mt-5 text-white/85 text-sm text-center select-none">
+        Arrastrá el XML actual aquí o <button id="inS1Select" class="underline font-semibold">seleccioná un archivo</button>.
+      </div>
+      <div id="inS1File" class="mt-3 text-xs text-white/70 line-clamp-2">Ningún archivo seleccionado.</div>
+    </li>
+
+    <li id="inStep2" class="rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl p-6 transition-all min-h-[300px] opacity-60">
+      <div class="flex items-start justify-between gap-3">
+        <div class="flex items-center gap-3">
+          <svg width="30" height="30" viewBox="0 0 24 24" fill="none"><path d="M4 7a2 2 0 012-2h7l5 5v7a2 2 0 01-2 2H6a2 2 0 01-2-2V7z" stroke="currentColor" class="text-white/70" stroke-width="1.5"/></svg>
+          <div>
+            <div class="text-xl font-semibold text-white">2. Archivo Anterior</div>
+            <div class="text-xs text-white/70 -mt-0.5">Opcional · mejora comparativas y tendencias</div>
+          </div>
+        </div>
+        <span id="inS2State" class="text-[11px] rounded px-2 py-0.5 bg-white/10 text-white/70">opcional</span>
+      </div>
+      <div id="drop2" class="dropzone dropzone--muted mt-5 text-white/85 text-sm text-center select-none">
+        Arrastrá el XML anterior aquí o <button id="inS2Select" class="underline font-semibold">subí un archivo</button>.
+      </div>
+      <div class="mt-3 flex gap-2">
+        <button id="inS2Skip" class="flex-1 px-3 py-2 rounded-md border border-white/15 text-white/85 text-xs hover:bg-white/10">
+          Saltar paso 2
+        </button>
+      </div>
+      <div id="inS2File" class="mt-3 text-xs text-white/70 line-clamp-2">No cargado.</div>
+    </li>
+
+    <li id="inStep3" class="rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl p-6 transition-all min-h-[300px] opacity-60">
+      <div class="flex items-start justify-between gap-3">
+        <div class="flex items-center gap-3">
+          <svg width="30" height="30" viewBox="0 0 24 24" fill="none"><path d="M20 7l-9 9-5-5" stroke="currentColor" class="text-white/70" stroke-width="1.8"/></svg>
+          <div>
+            <div class="text-xl font-semibold text-white">3. Generar Dashboard</div>
+            <div class="text-xs text-white/70 -mt-0.5">Se desbloquea con el paso 1</div>
+          </div>
+        </div>
+        <span id="inS3State" class="text-[11px] rounded px-2 py-0.5 bg-white/10 text-white/70">bloqueado</span>
+      </div>
+      <button id="inGenerate" class="mt-6 w-full px-4 py-3 rounded-md text-base font-semibold
+                     bg-[color:var(--bl-dorado,var(--brand-accent,#F2D157))]
+                     text-[color:var(--bl-azul-oscuro,#0A2342)]
+                     disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+        Generar dashboard
+      </button>
+      <p class="mt-2 text-[11px] text-white/55">Al generar, esta sección se ocultará y verás el dashboard.</p>
+    </li>
+  </ol>
+  <!-- NUEVA SECCIÓN: Importación de Snapshot -->
+  <div class="mt-8 text-center" id="snapshot-section">
+      <p class="text-sm text-white/70 mb-3">¿Tienes una instantánea?</p>
+      <div class="flex items-center justify-center gap-4">
+          <input type="file" id="snapshot-import-input" class="hidden" accept=".json">
+          <button id="import-snapshot-btn" class="action-btn text-base py-2 px-4" title="Importar un panel guardado previamente">
+              <i data-lucide="upload" class="w-4 h-4"></i>
+              <span>Importar Instantánea</span>
+          </button>
+      </div>
+  </div>
+</section>
+
+
+    <main class="flex-grow container mx-auto p-4 md:p-6 flex items-center justify-center">
+        
+        <section id="uploadSection" class="w-full transition-opacity duration-500">
+            <div id="smart-dropzone" class="max-w-4xl mx-auto rounded-xl p-8 md:p-12">
+                <div id="upload-step-1" class="text-center">
+                     <i data-lucide="file-check-2" class="w-16 h-16 text-white/70 mb-4 mx-auto"></i>
+                    <h3 class="font-display text-3xl text-white">Arrastra o selecciona el Archivo Actual</h3>
+                    <p class="text-white/60 mt-2 mb-6">Este es el archivo XML de MS Project más reciente (obligatorio).</p>
+                    <input type="file" id="currentFile" class="hidden" accept=".xml">
+                    <label for="currentFile" class="bg-[--bl-dorado] text-[--bl-azul-oscuro] font-bold font-display text-lg px-8 py-2 rounded-lg hover:bg-yellow-300 transition-all cursor-pointer">
+                        Seleccionar Archivo
+                    </label>
+                </div>
+
+                <div id="upload-step-2" class="hidden text-center">
+                    <div class="mb-8 p-4 bg-green-500/10 border border-green-500/30 rounded-lg">
+                        <p class="font-semibold text-green-300">Archivo Actual Cargado:</p>
+                        <p id="currentFileName" class="text-sm text-white"></p>
+                    </div>
+                    <i data-lucide="file-clock" class="w-16 h-16 text-white/70 mb-4 mx-auto"></i>
+                    <h3 class="font-display text-3xl text-white">Ahora, el Archivo Anterior (Opcional)</h3>
+                    <p class="text-white/60 mt-2 mb-6">Para comparar, arrastra o selecciona el XML de la semana pasada.</p>
+                     <input type="file" id="previousFile" class="hidden" accept=".xml">
+                    <label for="previousFile" class="bg-white/10 border border-white/20 text-white font-bold font-display text-lg px-8 py-2 rounded-lg hover:bg-white/20 transition-all cursor-pointer">
+                        Seleccionar Archivo
+                    </label>
+                </div>
+                 <p id="previousFileName" class="text-xs text-center text-[--bl-dorado] mt-4 h-4"></p>
+
+            </div>
+             <div class="text-center mt-8">
+                <button id="generate-report-btn" class="bg-[--bl-dorado] text-[--bl-azul-oscuro] font-bold font-display text-xl px-12 py-3 rounded-lg hover:bg-yellow-300 transition-all disabled:opacity-50 disabled:cursor-not-allowed" disabled>Generar Dashboard</button>
+             </div>
+        </section>
+
+        <section id="dashboardSection" class="hidden opacity-0 transition-opacity duration-1000 w-full">
+            <div class="mb-6 p-4 rounded-lg">
+                <h2 class="font-display text-4xl" id="projectName"></h2>
+                <p class="text-white/70" id="projectManager"></p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+
+                <div id="trend-analysis-container-for-export" class="hidden card p-6 rounded-lg col-span-1 md:col-span-2 lg:col-span-4 bg-[--bl-azul-oscuro]">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="font-display text-2xl text-white">Análisis de Tendencias (Semana Actual vs. Anterior)</h3>
+                        <button class="action-btn no-export" id="exportTrendJPG"><i data-lucide="image"></i>JPG</button>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div id="kpi-delta-section">
+                             <h4 class="font-display text-xl text-[--bl-dorado] mb-1 cursor-pointer" data-tooltip-text="Salud general del proyecto y su evolución semanal.">KPIs Principales</h4>
+                             <p class="text-xs text-white/60 -mt-1 mb-2 italic">Un resumen del cambio en la salud del proyecto.</p>
+                            <ul class="space-y-2 text-sm" id="kpiDeltaList"></ul>
+                        </div>
+                        <div id="slippage-section">
+                            <h4 class="font-display text-xl text-[--bl-dorado] mb-1 cursor-pointer" data-tooltip-text="Diagnóstico de las tareas clave que causaron retrasos en la última semana.">Análisis de Desvíos</h4>
+                            <p class="text-xs text-white/60 -mt-1 mb-2 italic">Tareas clave que se han retrasado recientemente.</p>
+                            <ul class="space-y-2 text-sm" id="slippageList"></ul>
+                        </div>
+                        <div id="scope-change-section">
+                           <h4 class="font-display text-xl text-[--bl-dorado] mb-1 cursor-pointer" data-tooltip-text="Control sobre el trabajo añadido o eliminado del plan.">Cambios en Alcance</h4>
+                           <p class="text-xs text-white/60 -mt-1 mb-2 italic">Detección de "scope creep" o cambios en el plan.</p>
+                            <ul class="space-y-2 text-sm" id="scopeChangeList"></ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Resumen Ejecutivo IA -->
+                <div id="summary-container-for-export" class="card p-6 rounded-lg col-span-1 md:col-span-2 lg:col-span-4 bg-[--bl-azul-oscuro]">
+                    <div class="flex flex-wrap justify-between items-center mb-4 gap-2">
+                        <h3 class="font-display text-2xl text-white">Resumen Ejecutivo para Cliente</h3>
+                        <div class="flex items-center gap-2 no-export">
+                            <button class="action-btn" id="generate-summary-btn"><i data-lucide="brain-circuit"></i>Generar Resumen IA</button>
+                            <button class="action-btn" id="exportSummaryJPG" style="display:none;"><i data-lucide="image"></i>JPG</button>
+                        </div>
+                    </div>
+                    <div id="executive-alerts" class="flex flex-wrap gap-2 mb-4"></div>
+                    <div id="executive-summary-content" class="text-white/80 text-base leading-relaxed">
+                        <p class="italic text-white/50">Haga clic en "Generar Resumen IA" para redactar un análisis basado en los datos del dashboard actual.</p>
+                    </div>
+                </div>
+                
+                <div class="col-span-1 md:col-span-2 lg:col-span-4 grid grid-cols-2 md:grid-cols-4 gap-6">
+                    <div class="card p-4 rounded-lg text-center">
+                        <h4 class="font-display text-lg text-white/60">Fecha de Inicio</h4>
+                        <p class="font-display text-3xl text-white" id="startDate"></p>
+                    </div>
+                    <div class="card p-4 rounded-lg text-center">
+                        <h4 class="font-display text-lg text-white/60">Fin Línea Base</h4>
+                        <p class="font-display text-3xl text-white" id="baselineEndDate"></p>
+                    </div>
+                    <div class="card p-4 rounded-lg text-center">
+                        <h4 class="font-display text-lg text-white/60">Fin Proyectada</h4>
+                        <p class="font-display text-3xl text-white" id="projectedEndDate"></p>
+                    </div>
+                    <div class="card p-4 rounded-lg text-center">
+                        <h4 class="font-display text-lg text-white/60">Días Restantes</h4>
+                        <p class="font-display text-3xl text-white" id="daysRemaining"></p>
+                    </div>
+                </div>
+
+                <div class="card p-4 rounded-lg"><div id="progressChart"></div></div>
+                <div class="card p-4 rounded-lg"><div id="timeChart"></div></div>
+                
+                <!-- KPI interpretable: Estado General (RAG) -->
+                <div id="rag-kpi-card" class="card p-4 rounded-lg md:col-span-2 lg:col-span-2 transition-shadow duration-300 kpi-interpretable" title="Doble clic para explicación con IA">
+                    <h3 class="font-display text-2xl mb-4 text-white text-center cursor-pointer" id="rag-title" data-tooltip-text="RAG (Red, Amber, Green) es un sistema de semáforo para mostrar la salud del proyecto. <br><b>Verde:</b> En buen camino. <br><b>Ámbar:</b> Precaución. <br><b>Rojo:</b> Riesgo alto.">Estado General (RAG)</h3>
+                    <div class="flex justify-around items-center h-full" id="ragStatusContainer">
+                        </div>
+                </div>
+
+                <div class="col-span-1 md:col-span-2 lg:col-span-4 grid grid-cols-2 md:grid-cols-4 gap-6">
+                    <div class="card p-4 rounded-lg text-center" id="completedTasksCard"></div>
+                    <div class="card p-4 rounded-lg text-center cursor-pointer hover:bg-white/10 transition-colors" id="inProgressTasksCard"></div>
+                    <div class="card p-4 rounded-lg text-center cursor-pointer hover:bg-white/10 transition-colors" id="notStartedTasksCard"></div>
+                    <div class="card p-4 rounded-lg text-center cursor-pointer hover:bg-white/10 transition-colors" id="overdueTasksCard"></div>
+                </div>
+
+                <div id="gantt-container-for-export" class="card p-6 rounded-lg col-span-1 md:col-span-2 lg:col-span-4 bg-[--bl-azul-oscuro]">
+                    <div class="flex flex-wrap justify-between items-center mb-4 gap-4">
+                        <h3 class="font-display text-2xl text-white">Diagrama de Gantt</h3>
+                        <div class="flex items-center gap-4 text-sm flex-wrap no-export">
+                             <div id="gantt-main-view-toggle" class="flex rounded-md bg-black/20 p-0.5">
+                                <button data-view="gantt" class="gantt-view-btn active px-2 py-0.5 rounded-md text-xs">Gantt</button>
+                                <button data-view="network" class="gantt-view-btn px-2 py-0.5 rounded-md text-xs">Diagrama de Red</button>
+                            </div>
+                            <div id="gantt-controls" class="flex items-center gap-4 text-sm flex-wrap">
+                                <div class="flex items-center gap-2">
+                                    <label for="ganttStartDate" class="text-white/70">Desde:</label>
+                                    <input type="date" id="ganttStartDate" class="bg-black/20 rounded-md p-1 border-white/20 text-white">
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <label for="ganttEndDate" class="text-white/70">Hasta:</label>
+                                    <input type="date" id="ganttEndDate" class="bg-black/20 rounded-md p-1 border-white/20 text-white">
+                                </div>
+                                <div id="gantt-timescale-toggle" class="flex rounded-md bg-black/20 p-0.5">
+                                    <button data-view="day" class="gantt-view-btn active px-2 py-0.5 rounded-md text-xs">Día</button>
+                                    <button data-view="week" class="gantt-view-btn px-2 py-0.5 rounded-md text-xs">Semana</button>
+                                </div>
+                                <button class="action-btn" id="regenerateGantt"><i data-lucide="refresh-cw" class="w-3 h-3"></i>Regenerar</button>
+                            </div>
+                        </div>
+                        <div class="flex gap-2 no-export">
+                             <button class="action-btn" id="expandAll"><i data-lucide="unfold-vertical"></i>Expandir</button>
+                             <button class="action-btn" id="collapseAll"><i data-lucide="fold-vertical"></i>Colapsar</button>
+                             <button class="action-btn" id="exportGanttJPG"><i data-lucide="image"></i>JPG</button>
+                             <button class="export-btn" id="exportAllTasks"><i data-lucide="file-down"></i>CSV</button>
+                        </div>
+                    </div>
+                     <div id="gantt-advanced-filters" class="flex flex-wrap items-center gap-4 mb-4 pb-4 border-b border-white/10 no-export">
+                        <div class="relative">
+                            <input type="text" id="gantt-search" placeholder="Buscar tarea por nombre..." class="bg-black/20 rounded-md py-1 pl-8 pr-2 border-white/20 text-white text-sm w-48">
+                            <i data-lucide="search" class="absolute left-2 top-1/2 -translate-y-1/2 w-4 h-4 text-white/50"></i>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <label for="gantt-resource-filter" class="text-sm text-white/70">Recurso:</label>
+                            <select id="gantt-resource-filter" class="bg-black/20 rounded-md py-1 px-2 border-white/20 text-white text-sm">
+                                <option value="all">Todos</option>
+                            </select>
+                        </div>
+                        <div id="gantt-isolation-filter" class="flex rounded-md bg-black/20 p-0.5 text-xs">
+                            <button data-filter="all" class="gantt-view-btn active px-2 py-0.5 rounded-md">Ver Todo</button>
+                            <button data-filter="critical" class="gantt-view-btn px-2 py-0.5 rounded-md">Solo Críticas</button>
+                            <button data-filter="milestones" class="gantt-view-btn px-2 py-0.5 rounded-md">Solo Hitos</button>
+                        </div>
+                    </div>
+                    <div id="gantt-chart-wrapper" class="relative">
+                        <div id="gantt-legend-anchor" class="relative"></div>
+                          <button id="legend-toggle" class="no-export absolute -top-10 right-2 z-20 rounded-full border border-white/20 bg-[rgba(10,22,40,0.9)] text-white/90 w-9 h-9 flex items-center justify-center shadow hover:scale-105 transition" aria-label="Mostrar/Ocultar leyenda" title="Leyenda">i</button>
+                          <aside id="gantt-legend" data-html2canvas-ignore="true" class="no-export absolute top-2 right-2 bg-[rgba(10,22,40,0.92)] backdrop-blur-sm border border-white/10 rounded-xl shadow-lg p-3 z-20 text-sm text-white/80 hidden">
+                            <div class="font-semibold text-white/90 mb-2">Leyenda</div>
+                            <div class="legend-item"><span class="swatch hatched"></span><span>Tarea resumen</span></div>
+                            <div class="legend-item"><span class="swatch" style="background:#ef4444"></span><span>0–24% completado</span></div>
+                            <div class="legend-item"><span class="swatch" style="background:#f59e0b"></span><span>25–49% completado</span></div>
+                            <div class="legend-item"><span class="swatch" style="background:#3b82f6"></span><span>50–74% completado</span></div>
+                            <div class="legend-item"><span class="swatch" style="background:#22c55e"></span><span>75–100% completado</span></div>
+                          </aside>
+                        </div>
+                        <div id="gantt-chart-container" class="w-full h-[600px] border border-white/10 rounded-md gantt-grid"></div>
+                        <div id="network-diagram-container" class="hidden w-full h-[600px] border border-white/10 rounded-md overflow-auto"></div>
+                    </div>
+                </div>
+                 <div id="burnup-container-for-export" class="card p-6 rounded-lg col-span-1 md:col-span-2 lg:col-span-2 bg-[--bl-azul-oscuro]">
+                     <div class="flex flex-wrap justify-between items-center mb-4 gap-4">
+                        <h3 class="font-display text-2xl text-white">Gráfico de Avance (Curva S)</h3>
+                        <div class="flex items-center gap-4 text-sm flex-wrap no-export">
+                            <div id="burnup-view-toggle" class="flex rounded-md bg-black/20 p-0.5">
+                                <button data-view="day" class="gantt-view-btn px-2 py-0.5 rounded-md text-xs">Día</button>
+                                <button data-view="week" class="gantt-view-btn active px-2 py-0.5 rounded-md text-xs">Semana</button>
+                            </div>
+                        </div>
+                        <div class="flex gap-2 no-export">
+                            <button class="action-btn" id="exportBurnupJPG"><i data-lucide="image"></i>JPG</button>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-4 text-sm flex-wrap mb-4 no-export">
+                        <div class="flex items-center gap-2">
+                            <label for="burnupStartDate" class="text-white/70">Desde:</label>
+                            <input type="date" id="burnupStartDate" class="bg-black/20 rounded-md p-1 border-white/20 text-white">
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <label for="burnupEndDate" class="text-white/70">Hasta:</label>
+                            <input type="date" id="burnupEndDate" class="bg-black/20 rounded-md p-1 border-white/20 text-white">
+                        </div>
+                        <button class="action-btn" id="regenerateBurnup"><i data-lucide="refresh-cw" class="w-3 h-3"></i>Regenerar</button>
+                    </div>
+                    <div id="burnupChart"></div>
+                </div>
+                <div id="resources-container-for-export" class="card p-6 rounded-lg col-span-1 md:col-span-2 lg:col-span-2">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="font-display text-2xl text-white">Análisis de Carga de Recursos</h3>
+                        <button class="action-btn no-export" id="exportResourcesJPG"><i data-lucide="image"></i>JPG</button>
+                    </div>
+                    <div id="resourceLoadChart"></div>
+                </div>
+
+                <!-- KPI interpretable: Índice de Rendimiento (SPI) -->
+                 <div id="spi-kpi-card" class="card p-6 rounded-lg col-span-1 md:col-span-2 lg:col-span-2 transition-shadow duration-300 kpi-interpretable" title="Doble clic para explicación con IA">
+                     <div class="flex justify-between items-center mb-4">
+                        <h3 class="font-display text-2xl text-white cursor-pointer" data-tooltip-text="<b>¿Qué es el SPI?</b><br>El Índice de Rendimiento del Cronograma (SPI) mide la eficiencia del tiempo del proyecto. Compara el trabajo que se ha completado contra el que debería haberse completado hasta hoy.<br><br><b>Interpretación de Colores:</b><br>🟢 <b>Verde (SPI >= 0.98):</b> ¡Excelente! El ritmo de trabajo es igual o mayor al planificado.<br>🟡 <b>Ámbar (0.90 a 0.97):</b> Precaución. El ritmo es ligeramente más lento de lo esperado.<br>🔴 <b>Rojo (SPI < 0.90):</b> Riesgo Alto. El ritmo de trabajo es significativamente menor al planificado.">Índice de Rendimiento (SPI)</h3>
+                        <button class="action-btn no-export" id="exportSPIJPG"><i data-lucide="image"></i>JPG</button>
+                    </div>
+                    <div id="spiValueContainer" class="flex items-center justify-center h-full"></div>
+                </div>
+                
+                <!-- Nuevo Panel: Diagnóstico Predictivo de Riesgos -->
+                <div id="predictive-risks-container" class="card p-6 rounded-lg col-span-1 md:col-span-2 lg:col-span-4 bg-[--bl-azul-oscuro]">
+                    <div class="flex flex-wrap justify-between items-center mb-4 gap-2">
+                        <h3 class="font-display text-2xl text-white flex items-center gap-2">
+                            <i data-lucide="alert-triangle" class="w-6 h-6 text-yellow-400"></i>
+                            Diagnóstico Predictivo de Riesgos (IA)
+                        </h3>
+                        <div class="flex items-center gap-2 no-export">
+                            <button class="action-btn" id="analyze-risks-btn"><i data-lucide="shield-half"></i>Analizar Riesgos con IA</button>
+                            <button class="action-btn" id="exportRisksPredictiveJPG" style="display:none;"><i data-lucide="image"></i>JPG</button>
+                        </div>
+                    </div>
+                    <div id="predictive-risks-content" class="text-white/80 text-base leading-relaxed space-y-4">
+                        <p class="italic text-white/50">Haga clic en "Analizar Riesgos con IA" para obtener una predicción de los 3-5 riesgos más probables de impactar el cronograma en las próximas dos semanas.</p>
+                    </div>
+                </div>
+                
+                <div id="foco-critico-container-for-export" class="card p-6 rounded-lg lg:col-span-2 bg-[--bl-azul-oscuro]">
+                     <div class="flex justify-between items-center mb-4">
+                        <h3 class="font-display text-2xl text-white cursor-pointer" data-tooltip-text="Muestra tareas que, si no se gestionan, tienen el mayor potencial de impactar negativamente el cronograma. Se basa en criticidad, urgencia y estado de avance.">Tareas de Foco Crítico</h3>
+                        <button class="action-btn no-export" id="exportFocoCriticoJPG"><i data-lucide="image"></i>JPG</button>
+                    </div>
+                    <ul class="space-y-3 max-h-60 overflow-y-auto" id="focoCriticoList"></ul>
+                </div>
+                <div id="upcoming-tasks-container-for-export" class="card p-6 rounded-lg lg:col-span-2 bg-[--bl-azul-oscuro]">
+                    <div class="flex flex-wrap justify-between items-center mb-4 gap-2">
+                        <h3 class="font-display text-2xl text-white cursor-pointer" data-tooltip-text="Muestra tareas clave que están programadas para comenzar pronto.">Próximas Tareas Clave</h3>
+                        <div class="flex items-center gap-2 text-xs no-export">
+                            <label for="upcoming-days">Ver en los próximos</label>
+                            <input type="number" id="upcoming-days" value="7" class="bg-black/20 w-12 text-center rounded-md p-0.5 border-white/20 text-white">
+                            <span>días</span>
+                        </div>
+                        <button class="action-btn no-export" id="exportUpcomingJPG"><i data-lucide="image"></i>JPG</button>
+                    </div>
+                    <div class="flex justify-center mb-3 no-export" id="upcoming-task-filter">
+                        <div class="flex rounded-md bg-black/20 p-0.5 text-xs">
+                            <button data-filter="all" class="gantt-view-btn active px-2 py-0.5 rounded-md">Todas</button>
+                            <button data-filter="critical" class="gantt-view-btn px-2 py-0.5 rounded-md">Críticas</button>
+                            <button data-filter="milestones" class="gantt-view-btn px-2 py-0.5 rounded-md">Hitos</button>
+                        </div>
+                    </div>
+                    <ul class="space-y-3 max-h-60 overflow-y-auto" id="upcomingTaskList"></ul>
+                </div>
+                <div id="milestones-container-for-export" class="card p-6 rounded-lg lg:col-span-2 bg-[--bl-azul-oscuro]">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="font-display text-2xl text-white">Hitos Principales</h3>
+                        <button class="action-btn no-export" id="exportMilestonesJPG"><i data-lucide="image"></i>JPG</button>
+                    </div>
+                    <div class="relative pl-6 max-h-96 overflow-y-auto" id="milestoneTimeline"></div>
+                </div>
+                <div id="criticalpath-container-for-export" class="card p-6 rounded-lg lg:col-span-2 bg-[--bl-azul-oscuro]">
+                     <div class="flex justify-between items-center mb-4">
+                        <h3 class="font-display text-2xl text-white">Ruta Crítica</h3>
+                        <button class="action-btn no-export" id="exportCriticalPathJPG"><i data-lucide="image"></i>JPG</button>
+                    </div>
+                    <ul class="space-y-3 max-h-60 overflow-y-auto" id="criticalPathList"></ul>
+                </div>
+                <div id="risks-container-for-export" class="card p-6 rounded-lg lg:col-span-2 bg-[--bl-azul-oscuro]">
+                     <div class="flex justify-between items-center mb-4">
+                        <h3 class="font-display text-2xl text-white cursor-pointer" data-tooltip-text="Identifica todas las tareas que ya han superado su fecha de finalización planificada pero no están al 100% completadas. Son un indicador directo de los desvíos del proyecto.">Riesgos (Tareas Atrasadas)</h3>
+                        <button class="action-btn no-export" id="exportRisksJPG"><i data-lucide="image"></i>JPG</button>
+                    </div>
+                    <ul class="space-y-3 max-h-60 overflow-y-auto" id="riskList"></ul>
+                </div>
+            </div>
+        </section>
+    </main>
+    
+    <div id="task-modal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
+        <div class="card w-full max-w-4xl max-h-[80vh] flex flex-col">
+            <div class="flex justify-between items-center p-4 border-b border-white/10">
+                <h3 id="modal-title" class="font-display text-2xl text-[--bl-dorado]"></h3>
+                <button id="modal-close-btn" class="p-1 rounded-full hover:bg-white/10">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            <div id="modal-content" class="p-6 overflow-y-auto"></div>
+        </div>
+    </div>
+    
+    <div id="gantt-tooltip"></div>
+
+    <aside id="branding-panel" class="flex flex-col">
+        <div class="flex justify-between items-center p-4 border-b border-white/10">
+            <h3 class="font-display text-2xl text-[--bl-dorado]">Personalización y IA</h3>
+            <button id="branding-close-btn" class="p-1 rounded-full hover:bg-white/10">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+        </div>
+        <div class="p-6 space-y-6 overflow-y-auto">
+            <div>
+                <h4 class="font-semibold mb-2 text-white/80">Logo de la Empresa</h4>
+                <input type="file" id="logo-upload-input" class="hidden" accept="image/*">
+                <label for="logo-upload-input" class="w-full text-center block bg-white/5 py-2 rounded-md border border-dashed border-white/20 cursor-pointer hover:bg-white/10">
+                    Subir nuevo logo
+                </label>
+            </div>
+            <div>
+                <h4 class="font-semibold mb-2 text-white/80">Tema de Color</h4>
+                <div class="grid grid-cols-3 gap-2 text-sm">
+                    <button class="theme-btn border-2 border-[--bl-dorado] p-2 rounded-md" data-theme="default">Default</button>
+                    <button class="theme-btn border-2 border-transparent p-2 rounded-md" data-theme="oceanic">Oceánico</button>
+                    <button class="theme-btn border-2 border-transparent p-2 rounded-md" data-theme="contrast">Contraste</button>
+                </div>
+            </div>
+            <div>
+                 <h4 class="font-semibold mb-2 text-white/80">Color de Acento</h4>
+                 <div class="relative">
+                    <input type="color" id="accent-color-picker" class="w-full h-10 p-0 border-0 bg-transparent cursor-pointer">
+                    <span class="absolute top-1/2 left-4 -translate-y-1/2 text-white/80 pointer-events-none" id="accent-color-value"></span>
+                 </div>
+            </div>
+
+            <!-- NUEVA SECCIÓN: CONFIGURACIÓN GEMINI API -->
+            <div class="pt-4 border-t border-white/10">
+                 <h4 class="font-semibold mb-2 text-[--bl-dorado] flex items-center gap-2">
+                    <i data-lucide="sparkles" class="w-4 h-4"></i>
+                    Configuración Gemini AI
+                </h4>
+                <p class="text-xs text-white/70 mb-2">
+                    Introduce tu API Key de Gemini Studio (debe tener acceso al modelo `gemini-2.5-flash-preview-05-20`).
+                    <a href="https://aistudio.google.com/api-keys" target="_blank" class="text-blue-400 hover:text-blue-300 underline block mt-1">Obtener mi API Key</a>
+                </p>
+                <input type="password" id="gemini-api-key-input" placeholder="Ingresa tu clave aquí..." value="">
+                <button id="save-api-key-btn" class="w-full mt-2 text-sm px-4 py-2 rounded-md bg-[--bl-azul-principal] text-white hover:bg-blue-600 transition">
+                    Guardar Clave
+                </button>
+                <p id="api-status-msg" class="text-xs mt-2 h-4 text-white/70"></p>
+            </div>
+        </div>
+    </aside>
+
+
+    <footer class="text-center p-4 mt-6 text-sm text-white/40">
+        Copyright 2024 | BlatoRH Group | All Rights Reserved
+    </footer>
+
+    <script>
+    // --- SCRIPT DE LA APLICACIÓN ---
+    
+    // Global variable for API key
+    let GEMINI_API_KEY = "";
+    
+    // --- INICIO DE NUEVAS FUNCIONALIDADES ---
+    
+    document.addEventListener('DOMContentLoaded', () => {
+        // 1. Inicializar fondo interactivo
+        particlesJS('particles-js', {
+            "particles": { "number": { "value": 50, "density": { "enable": true, "value_area": 800 } }, "color": { "value": "#ffffff" }, "shape": { "type": "circle" }, "opacity": { "value": 0.3, "random": false }, "size": { "value": 3, "random": true }, "line_linked": { "enable": true, "distance": 150, "color": getComputedStyle(document.documentElement).getPropertyValue('--bl-dorado').trim(), "opacity": 0.4, "width": 1 }, "move": { "enable": true, "speed": 2, "direction": "none", "random": false, "straight": false, "out_mode": "out", "bounce": false } },
+            "interactivity": { "detect_on": "canvas", "events": { "onhover": { "enable": true, "mode": "grab" }, "onclick": { "enable": true, "mode": "push" }, "resize": true }, "modes": { "grab": { "distance": 140, "line_linked": { "opacity": 1 } }, "push": { "particles_nb": 4 } } },
+            "retina_detect": true
+        });
+        
+        // 2. Aplicar preferencias guardadas y API Key
+        loadGeminiApiKey(); // Cargar la clave al inicio
+        applySavedPreferences();
+
+        // 3. Animación de entrada
+        setTimeout(() => {
+            document.getElementById('uploadSection').classList.add('loaded');
+        }, 100);
+
+        // 4. Lógica del panel de personalización
+        const brandingPanel = document.getElementById('branding-panel');
+        document.getElementById('branding-toggle-btn').addEventListener('click', () => brandingPanel.classList.add('is-open'));
+        document.getElementById('branding-close-btn').addEventListener('click', () => brandingPanel.classList.remove('is-open'));
+        
+        // Logo
+        const logoInput = document.getElementById('logo-upload-input');
+        logoInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    const dataUrl = event.target.result;
+                    localStorage.setItem('customLogo', dataUrl);
+                    document.getElementById('custom-logo').src = dataUrl;
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+        
+        // Temas
+        document.querySelectorAll('.theme-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const theme = btn.dataset.theme;
+                localStorage.setItem('customTheme', theme);
+                applyTheme(theme);
+            });
+        });
+
+        // Color de acento
+        const colorPicker = document.getElementById('accent-color-picker');
+        colorPicker.addEventListener('input', (e) => {
+            const newColor = e.target.value;
+            localStorage.setItem('accentColor', newColor);
+            applyAccentColor(newColor);
+        });
+
+        // 4b. Lógica de la API Key de Gemini
+        const apiKeyInput = document.getElementById('gemini-api-key-input');
+        const saveApiBtn = document.getElementById('save-api-key-btn');
+        const apiStatusMsg = document.getElementById('api-status-msg');
+        
+        saveApiBtn.addEventListener('click', () => {
+            const key = apiKeyInput.value.trim();
+            if (key) {
+                localStorage.setItem('geminiApiKey', key);
+                GEMINI_API_KEY = key;
+                apiStatusMsg.innerHTML = `<i data-lucide="check-circle" class="w-4 h-4 inline-block mr-1 text-green-400"></i>Clave guardada exitosamente.`;
+            } else {
+                localStorage.removeItem('geminiApiKey');
+                GEMINI_API_KEY = "";
+                apiStatusMsg.innerHTML = `<i data-lucide="alert-triangle" class="w-4 h-4 inline-block mr-1 text-red-400"></i>Clave eliminada. El resumen IA no funcionará.`;
+            }
+            lucide.createIcons();
+            setTimeout(() => apiStatusMsg.textContent = '', 5000);
+        });
+        
+        // 5. Lógica de la zona de carga inteligente (código existente)
+        const dropzone = document.getElementById('smart-dropzone');
+        const currentFileInput = document.getElementById('currentFile');
+        const previousFileInput = document.getElementById('previousFile');
+        const generateBtn = document.getElementById('generate-report-btn');
+        const step1 = document.getElementById('upload-step-1');
+        const step2 = document.getElementById('upload-step-2');
+
+        const handleFileSelection = (file, inputTarget) => {
+            if (inputTarget.id === 'currentFile') {
+                document.getElementById('currentFileName').textContent = file.name;
+                step1.classList.add('hidden');
+                step2.classList.remove('hidden');
+                generateBtn.disabled = false;
+            } else if (inputTarget.id === 'previousFile') {
+                document.getElementById('previousFileName').textContent = file.name;
+            }
+        };
+
+        [currentFileInput, previousFileInput].forEach(input => {
+            input.addEventListener('change', (e) => handleFileSelection(e.target.files[0], e.target));
+        });
+
+        dropzone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropzone.classList.add('dragover');
+        });
+        dropzone.addEventListener('dragleave', () => dropzone.classList.remove('dragover'));
+        dropzone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropzone.classList.remove('dragover');
+            const file = e.dataTransfer.files[0];
+            if (file) {
+                // Si el paso 1 está visible, es el archivo actual. Si no, es el anterior.
+                const targetInput = step1.classList.contains('hidden') ? previousFileInput : currentFileInput;
+                targetInput.files = e.dataTransfer.files;
+                handleFileSelection(file, targetInput);
+            }
+        });
+        
+        // Agregar listener al botón de IA de Resumen
+        document.getElementById('generate-summary-btn').addEventListener('click', generateExecutiveSummaryAI);
+        
+        // Agregar listener al botón de IA de Riesgos
+        document.getElementById('analyze-risks-btn').addEventListener('click', generatePredictiveRisksAI);
+
+        // Agregar listeners de doble clic para Asistente IA (Mejora 2)
+        document.getElementById('spi-kpi-card').addEventListener('dblclick', (e) => {
+            e.preventDefault();
+            const spiValue = document.getElementById('spiValueContainer').textContent.trim();
+            explainKPIAI('Schedule Performance Index (SPI)', spiValue, 'spi');
+        });
+        document.getElementById('rag-kpi-card').addEventListener('dblclick', (e) => {
+            e.preventDefault();
+            // Recoger los estados RAG generados por getRagStates
+            const ragTimeStatus = document.querySelector('#ragStatusContainer > div:nth-child(1) h4').textContent.trim();
+            const ragTasksStatus = document.querySelector('#ragStatusContainer > div:nth-child(2) h4').textContent.trim();
+            explainKPIAI('Estado General (RAG)', `Tiempo: ${ragTimeStatus}, Tareas: ${ragTasksStatus}`, 'rag');
+        });
+    });
+    
+    /**
+     * Carga la API Key de Gemini desde localStorage al inicio.
+     */
+    function loadGeminiApiKey() {
+        const savedKey = localStorage.getItem('geminiApiKey');
+        const apiKeyInput = document.getElementById('gemini-api-key-input');
+        if (savedKey) {
+            GEMINI_API_KEY = savedKey;
+            apiKeyInput.value = savedKey;
+        } else {
+            GEMINI_API_KEY = "";
+        }
+    }
+
+    function applyTheme(theme) {
+        document.body.className = document.body.className.replace(/theme-\w+/, '').trim();
+        if (theme && theme !== 'default') {
+            document.body.classList.add(`theme-${theme}`);
+        }
+        document.querySelectorAll('.theme-btn').forEach(b => {
+            b.style.borderColor = b.dataset.theme === theme ? 'var(--bl-dorado)' : 'transparent';
+        });
+        // Actualizar el color de las partículas
+        if (window.pJSDom && window.pJSDom[0]) {
+            const newColor = getComputedStyle(document.documentElement).getPropertyValue('--bl-dorado').trim();
+            window.pJSDom[0].pJS.particles.line_linked.color = newColor;
+        }
+    }
+
+    function applyAccentColor(color) {
+        if (!color) return;
+        document.documentElement.style.setProperty('--bl-dorado', color);
+        document.getElementById('accent-color-picker').value = color;
+        document.getElementById('accent-color-value').textContent = color.toUpperCase();
+        // Actualizar el color de las partículas
+        if (window.pJSDom && window.pJSDom[0]) {
+            window.pJSDom[0].pJS.particles.line_linked.color = color;
+        }
+    }
+
+    function applySavedPreferences() {
+        const savedLogo = localStorage.getItem('customLogo');
+        const savedTheme = localStorage.getItem('customTheme') || 'default';
+        const savedColor = localStorage.getItem('accentColor');
+
+        if (savedLogo) {
+            document.getElementById('custom-logo').src = savedLogo;
+        }
+        applyTheme(savedTheme);
+        if (savedColor) {
+            applyAccentColor(savedColor);
+        } else {
+            // Sincronizar el picker con el color por defecto
+            const defaultColor = getComputedStyle(document.documentElement).getPropertyValue('--bl-dorado').trim();
+            document.getElementById('accent-color-picker').value = defaultColor;
+            document.getElementById('accent-color-value').textContent = defaultColor.toUpperCase();
+        }
+    }
+
+    // --- MÓDULO GEMINI AI (Refactorizado para reuso) ---
+
+    const GEMINI_MODEL = "gemini-2.5-flash-preview-05-20";
+    
+    /**
+     * Función genérica para llamar a la API de Gemini con reintento.
+     * @param {string} systemPrompt - Instrucción de sistema para el modelo.
+     * @param {string} userQuery - Contenido principal para el modelo.
+     * @param {string} errorTargetId - ID del elemento donde mostrar errores.
+     * @returns {Promise<string|null>} El texto generado o null en caso de fallo.
+     */
+    async function callGeminiAPI(systemPrompt, userQuery, errorTargetId) {
+        const errorElement = document.getElementById(errorTargetId);
+        if (!GEMINI_API_KEY) {
+            errorElement.innerHTML = `<p class="text-red-400">Error: La API Key de Gemini no está configurada. Por favor, ingrésala en la configuración.</p>`;
+            lucide.createIcons();
+            return null;
+        }
+
+        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_API_KEY}`;
+        
+        const payload = {
+            contents: [{ parts: [{ text: userQuery }] }],
+            systemInstruction: { parts: [{ text: systemPrompt }] },
+        };
+        
+        let resultText = null;
+        const maxRetries = 3;
+
+        for (let attempt = 0; attempt < maxRetries; attempt++) {
+            try {
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    if (response.status === 400 || response.status === 401) {
+                         throw new Error("Error de autenticación o solicitud inválida (Revisa la API Key).");
+                    }
+                    throw new Error(`Error HTTP: ${response.status}`);
+                }
+                
+                const result = await response.json();
+                const candidate = result.candidates?.[0];
+
+                if (candidate && candidate.content?.parts?.[0]?.text) {
+                    resultText = candidate.content.parts[0].text;
+                    break; 
+                } else {
+                    throw new Error("Respuesta de la IA vacía o inesperada.");
+                }
+            } catch (error) {
+                console.error(`Intento ${attempt + 1} fallido:`, error.message);
+                if (error.message.includes("autenticación")) {
+                     errorElement.innerHTML = `<p class="text-red-400 font-semibold">Error de autenticación: La clave API de Gemini no es válida. Por favor, corrígela en la configuración.</p>`;
+                     return null;
+                }
+                if (attempt < maxRetries - 1) {
+                    const delay = Math.pow(2, attempt) * 1000;
+                    await new Promise(resolve => setTimeout(resolve, delay));
+                } else {
+                    errorElement.innerHTML = `<p class="text-red-400 font-semibold">Error de servicio: La IA no pudo generar el resumen después de ${maxRetries} intentos.</p>`;
+                    return null;
+                }
+            }
+        }
+        return resultText;
+    }
+    
+    /**
+     * Genera un resumen ejecutivo utilizando la API de Gemini (Mejora 1).
+     */
+    async function generateExecutiveSummaryAI() {
+        const contentArea = document.getElementById('executive-summary-content');
+        const exportBtn = document.getElementById('exportSummaryJPG');
+        const generateBtn = document.getElementById('generate-summary-btn');
+
+        if (!projectDataStore || !projectDataStore.name) {
+            contentArea.innerHTML = `<p class="text-red-400">Error: No hay datos de proyecto cargados para analizar.</p>`;
+            return;
+        }
+        
+        generateBtn.disabled = true;
+        generateBtn.innerHTML = `<span class="loading-dots">Generando resumen IA</span>`;
+        exportBtn.style.display = 'none';
+        contentArea.innerHTML = `<p class="text-white/50 text-center py-4"><span class="loading-dots">Analizando KPIs y redactando borrador</span>...</p>`;
+        
+        // 1. Recopilar datos de KPIs para el prompt (misma lógica que antes)
+        const today = new Date();
+        const flatTaskList = flattenTasks(projectDataStore.tasks).filter(t => !t.isSummary);
+        const { projectedEndDate, spi } = calculateKPIs(flatTaskList, new Date(projectDataStore.startDate), new Date(projectDataStore.baselineEndDate), today);
+        const taskStats = { 
+            completed: flatTaskList.filter(t => t.percentComplete === 100).length,
+            inProgress: flatTaskList.filter(t => t.percentComplete > 0 && t.percentComplete < 100).length,
+            overdue: flatTaskList.filter(t => new Date(t.end) < today && t.percentComplete < 100).length,
+            total: flatTaskList.length
+        };
+        const criticalFocusCount = calculateFocoCriticoCount(flatTaskList, today);
+        const { time: ragTime, tasks: ragTasks } = getRagStates(projectedEndDate, new Date(projectDataStore.baselineEndDate), taskStats.overdue, taskStats.total);
+        
+        const kpisData = {
+            projectName: projectDataStore.name,
+            projectManager: projectDataStore.projectManager,
+            reportDate: formatDate(today.toISOString()),
+            startDate: formatDate(projectDataStore.startDate),
+            baselineEndDate: formatDate(projectDataStore.baselineEndDate),
+            projectedEndDate: formatDate(projectedEndDate.toISOString()),
+            schedulePerformanceIndex: spi.toFixed(2),
+            tasksOverdue: taskStats.overdue,
+            tasksCriticalFocus: criticalFocusCount,
+            ragTimeStatus: ragTime,
+            ragTasksStatus: ragTasks,
+            taskCompletionStats: {
+                total: taskStats.total,
+                completed: taskStats.completed,
+                inProgress: taskStats.inProgress,
+            }
+        };
+
+        const systemPrompt = "Actúa como un Project Manager senior con 15 años de experiencia en consultoría estratégica. Basado en los siguientes KPIs de un proyecto, redacta un resumen ejecutivo para el cliente final. El tono debe ser profesional, claro, transparente y orientado a la acción. Destaca: (1) el estado general del proyecto (usando RAG/SPI), (2) los principales riesgos (basado en tareas atrasadas y foco crítico), (3) los logros recientes (tareas completadas) y (4) una recomendación clave prioritaria. Sé conciso (máximo 150 palabras). El resumen debe estar en formato HTML, contenido en una única etiqueta <p>.";
+        const userQuery = `Datos: ${JSON.stringify(kpisData, null, 2)}`;
+        
+        const resultText = await callGeminiAPI(systemPrompt, userQuery, 'executive-summary-content');
+
+        // 2. Inyectar el resultado y restaurar la UI
+        if (resultText) {
+            contentArea.innerHTML = resultText;
+            exportBtn.style.display = 'inline-flex';
+        }
+        generateBtn.disabled = false;
+        generateBtn.innerHTML = `<i data-lucide="brain-circuit"></i>Generar Resumen IA`;
+        lucide.createIcons();
+    }
+    
+    /**
+     * Genera un diagnóstico predictivo de riesgos (Mejora 2 - Parte 1).
+     */
+    async function generatePredictiveRisksAI() {
+        const contentArea = document.getElementById('predictive-risks-content');
+        const generateBtn = document.getElementById('analyze-risks-btn');
+
+        if (!projectDataStore || !projectDataStore.name) {
+            contentArea.innerHTML = `<p class="text-red-400">Error: No hay datos de proyecto cargados para el análisis de riesgos.</p>`;
+            return;
+        }
+        
+        generateBtn.disabled = true;
+        generateBtn.innerHTML = `<span class="loading-dots">Analizando riesgos predictivos</span>`;
+        contentArea.innerHTML = `<p class="text-white/50 text-center py-4"><span class="loading-dots">Procesando datos complejos del cronograma</span>...</p>`;
+        
+        // 1. Recolectar datos relevantes para la predicción
+        const today = new Date();
+        const flatTaskList = flattenTasks(projectDataStore.tasks).filter(t => !t.isSummary);
+        const { projectedEndDate, spi } = calculateKPIs(flatTaskList, new Date(projectDataStore.startDate), new Date(projectDataStore.baselineEndDate), today);
+
+        // Identificar tareas críticas y recursos sobrecargados (simplificado del chart de recursos)
+        const criticalTasks = flatTaskList.filter(t => t.isCritical && t.percentComplete < 100)
+            .map(t => ({ 
+                name: t.name, 
+                end: formatDate(t.end), 
+                percent: t.percentComplete, 
+                overdue: new Date(t.end) < today ? true : false,
+                overdueDays: new Date(t.end) < today ? Math.ceil((today - new Date(t.end)) / (1000 * 60 * 60 * 24)) : 0
+            }));
+
+        const resourcesMap = projectDataStore.resources;
+        const resourceLoadData = Array.from(getResourceLoadData(flatTaskList, resourcesMap).entries()).map(([name, data]) => ({
+            resource: name,
+            taskCount: data.count,
+            overloadIndicator: data.count > (flatTaskList.length / 5) ? 'High' : 'Normal'
+        }));
+        
+        const { time: ragTime, tasks: ragTasks } = getRagStates(projectedEndDate, new Date(projectDataStore.baselineEndDate), criticalTasks.filter(t => t.overdue).length, flatTaskList.length);
+
+        const risksData = {
+            projectName: projectDataStore.name,
+            reportDate: formatDate(today.toISOString()),
+            projectStatus: {
+                statusRAG: ragTime === 'Red' || ragTasks === 'Red' ? 'Rojo' : (ragTime === 'Amber' || ragTasks === 'Amber' ? 'Ámbar' : 'Verde'),
+                spi: spi.toFixed(2),
+                projectedDelayDays: Math.max(0, Math.ceil((projectedEndDate - new Date(projectDataStore.baselineEndDate)) / (1000 * 60 * 60 * 24))),
+                tasksOverdueCount: criticalTasks.filter(t => t.overdue).length
+            },
+            criticalTasks: criticalTasks.slice(0, 15), // Muestrear más para que el modelo elija
+            resourceOverloadSample: resourceLoadData.filter(r => r.overloadIndicator === 'High').slice(0, 3)
+        };
+
+        const systemPrompt = `
+            Actúa como un Director de Proyectos Senior de una firma global de consultoría estratégica (como McKinsey o BCG). Tu cliente es un sponsor ejecutivo que necesita tomar decisiones rápidas. Basado en los datos del proyecto proporcionados, genera un "Diagnóstico Predictivo de Riesgos" con el siguiente formato, siendo conciso y profesional, y respetando un límite estricto de 250 palabras:
+
+            1. **Encabezado claro** con nombre del proyecto, fecha y estado general (Verde/Ámbar/Rojo).
+            2. **Resumen ejecutivo de 3 líneas** con SPI, retraso proyectado y número de tareas vencidas.
+            3. **Lista numerada de 3 a 5 riesgos críticos**. Cada uno debe incluir:
+                - **Tarea/Factor:** Nombre de la tarea o factor sistémico.
+                - **Métricas:** Fecha límite y % de avance.
+                - **Riesgo:** Explicación concisa y clara.
+                - **Impacto:** Consecuencia directa en el cronograma.
+                - **Acción inmediata:** Recomendación concreta, realista y orientada a resultados.
+            4. **Una recomendación estratégica final** (1 oración) que priorice las acciones.
+            
+            Usa negritas y viñetas (formato HTML, no Markdown) para facilitar la lectura rápida.
+        `;
+        const userQuery = `Datos para el Diagnóstico Predictivo de Riesgos: ${JSON.stringify(risksData, null, 2)}`;
+        
+        const resultText = await callGeminiAPI(systemPrompt, userQuery, 'predictive-risks-content');
+
+        // 2. Inyectar el resultado y restaurar la UI
+        if (resultText) {
+            contentArea.innerHTML = resultText;
+            document.getElementById('exportRisksPredictiveJPG').style.display = 'inline-flex';
+        } else {
+             // Si falló, el error ya fue escrito por callGeminiAPI
+        }
+        generateBtn.disabled = false;
+        generateBtn.innerHTML = `<i data-lucide="shield-half"></i>Analizar Riesgos con IA`;
+        lucide.createIcons();
+    }
+    
+    /**
+     * Asistente de Interpretación Contextual en Tiempo Real (Mejora 2 - Parte 2).
+     */
+    async function explainKPIAI(kpiName, kpiValue, kpiType) {
+        if (!projectDataStore || !projectDataStore.name) {
+            showTaskModal('Asistente IA', '<p class="text-red-400">Carga un proyecto para habilitar el asistente de interpretación.</p>');
+            return;
+        }
+
+        const modalTitle = `Interpretación IA: ${kpiName}`;
+        const loadingContent = `<p class="text-white/50 text-center py-4"><span class="loading-dots">Consultando experto de BlatoRH IA</span>...</p>`;
+        showTaskModal(modalTitle, loadingContent);
+        
+        const flatTaskList = flattenTasks(projectDataStore.tasks).filter(t => !t.isSummary);
+        const { projectedEndDate, spi } = calculateKPIs(flatTaskList, new Date(projectDataStore.startDate), new Date(projectDataStore.baselineEndDate), new Date());
+        
+        const contextData = {
+            kpiName: kpiName,
+            kpiValue: kpiValue,
+            projectName: projectDataStore.name,
+            currentSPI: spi.toFixed(2),
+            projectedEndDate: formatDate(projectedEndDate.toISOString()),
+            baselineEndDate: formatDate(projectDataStore.baselineEndDate),
+            tasksTotal: flatTaskList.length,
+            tasksOverdue: flatTaskList.filter(t => new Date(t.end) < new Date() && t.percentComplete < 100).length
+        };
+
+        const systemPrompt = "Eres un consultor de BlatoRH explicándole a un cliente no técnico el estado de su proyecto. El KPI '[NOMBRE_KPI]' tiene un valor de '[VALOR]'. Explica en 1-2 oraciones claras y sin jerga técnica: 1) Qué significa este valor en el contexto de SU proyecto específico (usando el nombre del proyecto y las fechas), y 2) Qué debería hacer el cliente al respecto (si aplica). Sé directo, conciso y útil. El resultado debe estar en formato HTML, contenido en una única etiqueta <p>.";
+        let userQuery = `Analiza este KPI: ${kpiName} con valor ${kpiValue}. Contexto del Proyecto: ${JSON.stringify(contextData, null, 2)}`;
+        
+        // Sobrescribir el prompt para RAG ya que es un KPI compuesto
+        if (kpiType === 'rag') {
+             userQuery = `Analiza el estado RAG (Rojo, Ámbar, Verde) de la siguiente manera: ${kpiValue}. Contexto del Proyecto: ${JSON.stringify(contextData, null, 2)}. El resumen debe explicar el riesgo implicado por esos colores para el proyecto ${contextData.projectName} y la acción sugerida.`;
+        }
+
+        const resultText = await callGeminiAPI(systemPrompt, userQuery, 'modal-content');
+
+        // 2. Inyectar el resultado en el modal
+        if (resultText) {
+            document.getElementById('modal-content').innerHTML = resultText;
+        }
+        // Si falló, el error ya fue escrito por callGeminiAPI en el modal
+    }
+    
+    /**
+     * Helper para obtener datos de carga de recursos para el prompt predictivo.
+     * @returns {Map} Mapa de recursos genéricos y su carga.
+     */
+    function getResourceLoadData(tasks, resourcesMap) {
+        const genericResourceLoad = new Map();
+        tasks.forEach(task => {
+            task.resourceIds.forEach(resId => {
+                const resource = resourcesMap.get(resId);
+                if(resource && resource.name) {
+                    const genericName = resource.name.replace(/\s*\d+\s*$/, '').trim();
+                    if (!genericResourceLoad.has(genericName)) {
+                        genericResourceLoad.set(genericName, { count: 0, tasks: [] });
+                    }
+                    genericResourceLoad.get(genericName).count++;
+                }
+            });
+        });
+        return genericResourceLoad;
+    }
+
+    // --- FIN LÓGICA DE GEMINI AI ---
+
+
+    // --- RESTO DEL SCRIPT JS ORIGINAL (CON NUEVAS FUNCIONES INTEGRADAS) ---
+
+    let projectDataStore = {}; // Global store for full project data
+    let previousProjectDataStore = null; // Store for previous project data
+    let ganttViewMode = 'day'; // 'day' or 'week'
+    let burnupViewMode = 'week'; // 'day' or 'week'
+    let ganttMainView = 'gantt'; // gantt or network
+    let ganttSearchTerm = '';
+    let ganttResourceFilter = 'all';
+    let ganttIsolationFilter = 'all';
+
+    const uploadSection = document.getElementById('uploadSection');
+    const dashboardSection = document.getElementById('dashboardSection');
+    const generateBtn = document.getElementById('generate-report-btn');
+    const currentFileInput = document.getElementById('currentFile');
+    const previousFileInput = document.getElementById('previousFile');
+
+    generateBtn.addEventListener('click', handleFileSelect);
+
+    async function handleFileSelect(event) {
+        const currentFile = currentFileInput.files[0];
+        const previousFile = previousFileInput.files[0];
+        
+        if (!currentFile) {
+            console.warn("Debe seleccionar un 'Archivo Actual' para continuar.");
+            return;
+        }
+
+        const readFile = file => {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = e => {
+                    const parser = new DOMParser();
+                    const xmlDoc = parser.parseFromString(e.target.result, "application/xml");
+                    if (xmlDoc.getElementsByTagName("parsererror").length > 0) {
+                        reject(new Error("Error al procesar el archivo XML."));
+                    }
+                    resolve(parseProjectXML(xmlDoc));
+                };
+                reader.onerror = reject;
+                reader.readAsText(file);
+            });
+        };
+
+        try {
+            const currentData = await readFile(currentFile);
+            projectDataStore = { ...currentData, tasks: buildTaskTree(currentData.tasks) };
+            
+            if (previousFile) {
+                const previousData = await readFile(previousFile);
+                previousProjectDataStore = { ...previousData, tasks: buildTaskTree(previousData.tasks) };
+            } else {
+                previousProjectDataStore = null;
+            }
+
+            uploadSection.style.opacity = '0';
+            uploadSection.style.pointerEvents = 'none';
+            setTimeout(() => {
+                uploadSection.classList.add('hidden');
+                dashboardSection.classList.remove('hidden');
+                setTimeout(() => dashboardSection.classList.remove('opacity-0'), 50);
+                processAndRenderDashboard(projectDataStore, previousProjectDataStore);
+            }, 500);
+
+        } catch (error) {
+            console.error("Error processing files:", error);
+            const message = "Hubo un error al leer uno de los archivos del proyecto. Asegúrate de que son XML válidos exportados desde MS Project.";
+            const contentArea = document.getElementById('executive-summary-content');
+            contentArea.innerHTML = `<p class="text-red-400 font-semibold">${message}</p>`;
+        }
+    }
+    
+    // --- NUEVAS FUNCIONES HELPER ---
+    /**
+     * Calculates the RAG (Red, Amber, Green) status for Time and Tasks.
+     * @returns {{time: string, tasks: string}} An object with the status ('Red', 'Amber', 'Green').
+     */
+    function getRagStates(projectedEndDate, baselineEndDate, overdueTasksCount, totalTasks) {
+        const timeDiffDays = (projectedEndDate - baselineEndDate) / (1000 * 60 * 60 * 24);
+        let timeStatus = 'Green';
+        if (timeDiffDays > 14) {
+            timeStatus = 'Red';
+        } else if (timeDiffDays > 0) {
+            timeStatus = 'Amber';
+        }
+
+        let tasksStatus = 'Green';
+        if (totalTasks > 0 && (overdueTasksCount / totalTasks) > 0.1) {
+            tasksStatus = 'Red';
+        } else if (overdueTasksCount > 0) {
+            tasksStatus = 'Amber';
+        }
+        return { time: timeStatus, tasks: tasksStatus };
+    }
+
+    /**
+     * Calculates the number of critical focus tasks based on specific criteria.
+     * @returns {number} The count of critical focus tasks.
+     */
+    function calculateFocoCriticoCount(tasks, today) {
+        const sevenDaysFromNow = new Date(today);
+        sevenDaysFromNow.setDate(today.getDate() + 7);
+        const focoTasks = new Map();
+        
+        // Imminent start
+        tasks.filter(t => t.isCritical && t.percentComplete === 0 && new Date(t.start) >= today && new Date(t.start) <= sevenDaysFromNow)
+             .forEach(t => { if (!focoTasks.has(t.id)) focoTasks.set(t.id, { task: t }); });
+        
+        // Low progress
+        tasks.filter(t => t.isCritical && t.percentComplete > 0 && t.percentComplete < 50)
+             .sort((a, b) => a.percentComplete - b.percentComplete).slice(0, 5)
+             .forEach(t => { if (!focoTasks.has(t.id)) focoTasks.set(t.id, { task: t }); });
+             
+        // Overdue
+        tasks.filter(t => t.isCritical && t.percentComplete < 100 && new Date(t.end) < today)
+             .forEach(t => { if (!focoTasks.has(t.id)) focoTasks.set(t.id, { task: t }); });
+             
+        return focoTasks.size;
+    }
+    
+    /**
+     * Renders the "intelligent alerts" based on key project metrics.
+     */
+    function renderExecutiveAlerts(data) {
+        const container = document.getElementById('executive-alerts');
+        if (!container) return;
+        container.innerHTML = ''; // Clear previous alerts
+
+        const createAlert = (text, color, tooltip = '') => {
+            const colors = {
+                red: 'bg-red-500/20 text-red-400',
+                yellow: 'bg-yellow-500/20 text-yellow-400',
+                green: 'bg-green-500/20 text-green-400'
+            };
+            const span = document.createElement('span');
+            span.className = `px-2 py-1 rounded text-sm font-medium ${colors[color] || ''}`;
+            span.innerHTML = text; // Use innerHTML to parse potential icon entities
+            if (tooltip) {
+                span.dataset.tooltipText = tooltip;
+            }
+            container.appendChild(span);
+        };
+
+        // Priority Order: Critical (Red) -> Warning (Yellow) -> Success (Green)
+        if (data.ragTime === 'Red') {
+            createAlert('📅 Retraso significativo en cronograma', 'red');
+        }
+        if (data.spi < 0.9) {
+            createAlert(`📉 SPI crítico (${data.spi.toFixed(2)})`, 'red', 'El ritmo de trabajo es significativamente menor al planificado.');
+        }
+        if (data.criticalCount > 0) {
+            createAlert(`🎯 ${data.criticalCount} tarea(s) de foco crítico`, 'red');
+        }
+        if (data.overdueCount > 0) {
+            createAlert(`⚠️ ${data.overdueCount} tarea(s) atrasadas`, 'yellow');
+        }
+        if (data.spi >= 0.9 && data.spi <= 0.97) {
+            createAlert(`⚠️ SPI en precaución (${data.spi.toFixed(2)})`, 'yellow', 'El ritmo de trabajo es ligeramente más lento de lo esperado.');
+        }
+        if (data.ragTasks === 'Green' && data.overdueCount === 0) {
+            createAlert('✅ Ejecución de tareas bajo control', 'green');
+        }
+    }
+
+
+    // --- RESTO DEL SCRIPT JS ORIGINAL (CON NUEVAS FUNCIONES INTEGRADAS) ---
+    function parseProjectXML(xmlDoc) { const get = (el, tag) => el.getElementsByTagName(tag)[0]?.textContent || ''; const resources = new Map(); Array.from(xmlDoc.getElementsByTagName('Resource')).forEach(resEl => { const id = get(resEl, 'UID'); if (id) { resources.set(id, { name: get(resEl, 'Name') || `Recurso ${id}` }); } }); const tasks = Array.from(xmlDoc.getElementsByTagName('Task')).map(taskEl => { const assignments = Array.from(taskEl.getElementsByTagName('Assignment')).map(assEl => { const resourceId = get(assEl, 'ResourceUID'); return resourceId; }); const predecessors = Array.from(taskEl.getElementsByTagName('PredecessorLink')).map(linkEl => ({ uid: get(linkEl, 'PredecessorUID'), type: get(linkEl, 'Type') })); return { id: get(taskEl, 'UID'), name: get(taskEl, 'Name'), start: get(taskEl, 'Start'), end: get(taskEl, 'Finish'), percentComplete: parseFloat(get(taskEl, 'PercentComplete') || 0), isMilestone: get(taskEl, 'Milestone') === '1', isCritical: get(taskEl, 'Critical') === '1', outlineLevel: parseInt(get(taskEl, 'OutlineLevel') || 1), isSummary: get(taskEl, 'Summary') === '1', resourceIds: assignments, predecessors: predecessors, } }); const projectSummary = tasks.find(t => t.id === '0'); return { name: get(xmlDoc, 'Title') || 'Proyecto sin Título', projectManager: get(xmlDoc, 'Author') || 'No especificado', startDate: get(xmlDoc, 'StartDate'), baselineEndDate: projectSummary ? projectSummary.end : get(xmlDoc, 'FinishDate'), tasks: tasks.filter(t => t.id !== '0' && t.name), resources: resources }; }
+    function buildTaskTree(tasks) { const stack = []; const tree = []; for (const task of tasks) { const node = { ...task, children: [] }; while (stack.length > 0 && stack[stack.length - 1].outlineLevel >= node.outlineLevel) { stack.pop(); } if (stack.length > 0) { stack[stack.length - 1].children.push(node); } else { tree.push(node); } stack.push(node); } return tree; }
+    function flattenTasks(tasks) { let flat = []; tasks.forEach(task => { flat.push(task); if (task.children) { flat = flat.concat(flattenTasks(task.children)); } }); return flat; }
+    function processAndRenderDashboard(data, previousData = null) { const today = new Date(); const startDate = new Date(data.startDate); const baselineEndDate = new Date(data.baselineEndDate); const flatTaskList = flattenTasks(data.tasks); const executableTasks = flatTaskList.filter(t => !t.isSummary); const { projectedEndDate, spi } = calculateKPIs(executableTasks, startDate, baselineEndDate, today); const daysRemaining = Math.max(0, Math.ceil((baselineEndDate - today) / (1000 * 60 * 60 * 24))); const taskStats = { completed: executableTasks.filter(t => t.percentComplete === 100), inProgress: executableTasks.filter(t => t.percentComplete > 0 && t.percentComplete < 100), notStarted: executableTasks.filter(t => t.percentComplete === 0), overdue: executableTasks.filter(t => new Date(t.end) < today && t.percentComplete < 100), }; updateReportDateTime(); populateSummary(data, projectedEndDate, daysRemaining); const overallProgress = executableTasks.length > 0 ? Math.round(executableTasks.reduce((acc, task) => acc + task.percentComplete, 0) / executableTasks.length) : 0; const timeProgress = (baselineEndDate - startDate) > 0 ? Math.min(100, Math.round(((today - startDate) / (baselineEndDate - startDate)) * 100)) : 0; renderGauges(overallProgress, timeProgress); renderSPI(spi); renderRagStatus(projectedEndDate, baselineEndDate, taskStats.overdue.length, executableTasks.length); setupGlobalTooltips(); renderTaskStats(taskStats); setupGanttFilters(data.startDate, data.baselineEndDate); setupUpcomingTasksFilter(); filterAndRenderViews(); renderUpcomingTasks(7, 'all'); setupBurnUpFilters(data.startDate, data.baselineEndDate); filterAndRenderBurnup(executableTasks); renderResourceLoadChart(executableTasks, data.resources); renderMilestoneTimeline(flatTaskList); renderCriticalPath(executableTasks); renderFocoCritico(executableTasks, today); renderRisks(executableTasks, today); if (previousData) { renderTrendAnalysis(data, previousData); } addExportFunctionality({ ...data, tasks: flatTaskList }); const ragStates = getRagStates(projectedEndDate, baselineEndDate, taskStats.overdue.length, executableTasks.length); const criticalFocusCount = calculateFocoCriticoCount(executableTasks, today); renderExecutiveAlerts({ spi: spi, overdueCount: taskStats.overdue.length, criticalCount: criticalFocusCount, ragTime: ragStates.time, ragTasks: ragStates.tasks }); }
+    function calculateKPIs(executableTasks, startDate, baselineEndDate, today) { const overallProgress = executableTasks.length > 0 ? Math.round(executableTasks.reduce((acc, task) => acc + task.percentComplete, 0) / executableTasks.length) : 0; const timeProgress = (baselineEndDate - startDate) > 0 ? Math.min(100, Math.round(((today - startDate) / (baselineEndDate - startDate)) * 100)) : 0; const performanceFactor = timeProgress > 0 ? (overallProgress / timeProgress) : 1; const totalPlannedDuration = (baselineEndDate - startDate) / (1000 * 60 * 60 * 24); const projectedDuration = totalPlannedDuration / (performanceFactor || 1); const projectedEndDate = new Date(startDate.getTime() + projectedDuration * 1000 * 60 * 60 * 24); const EV = executableTasks.filter(t => t.percentComplete === 100).length; const PV = executableTasks.filter(t => new Date(t.end) <= today).length; const spi = (PV > 0) ? (EV / PV) : 1.00; return { projectedEndDate, spi, overallProgress }; }
+    function populateSummary(data, projectedEndDate, daysRemaining) { document.getElementById('projectName').textContent = data.name; document.getElementById('projectManager').textContent = `Project Manager: ${data.projectManager}`; document.getElementById('startDate').textContent = formatDate(data.startDate); document.getElementById('baselineEndDate').textContent = formatDate(data.baselineEndDate); document.getElementById('projectedEndDate').textContent = formatDate(projectedEndDate); document.getElementById('daysRemaining').textContent = daysRemaining; }
+    function updateReportDateTime() { const now = new Date(); const day = String(now.getDate()).padStart(2, '0'); const month = String(now.getMonth() + 1).padStart(2, '0'); const year = String(now.getFullYear()).slice(-2); const hours = String(now.getHours()).padStart(2, '0'); const minutes = String(now.getMinutes()).padStart(2, '0'); const formattedDateTime = `${day}/${month}/${year} ${hours}:${minutes}`; const reportDateEl = document.getElementById('report-date'); if(reportDateEl) { reportDateEl.textContent = `Generado el: ${formattedDateTime}`; } }
+    function renderGauges(progress, time) { document.getElementById('progressChart').innerHTML = ''; document.getElementById('timeChart').innerHTML = ''; const gaugeOptions = (series, label) => ({ chart: { type: 'radialBar', height: 250, sparkline: { enabled: true } }, plotOptions: { radialBar: { hollow: { size: '70%' }, track: { background: 'rgba(255, 255, 255, 0.1)' }, dataLabels: { name: { offsetY: -10, color: 'var(--bl-dorado)', fontFamily: 'Bebas Neue', fontSize: '20px' }, value: { offsetY: 5, color: '#FFFFFF', fontFamily: 'Exo', fontSize: '24px', formatter: val => val + "%" } } } }, fill: { colors: ['var(--bl-dorado)'] }, stroke: { lineCap: 'round' }, series: [series], labels: [label] }); new ApexCharts(document.querySelector("#progressChart"), gaugeOptions(progress, 'Progreso General')).render(); new ApexCharts(document.querySelector("#timeChart"), gaugeOptions(time, 'Tiempo Transcurrido')).render(); }
+    function renderSPI(spi) { const container = document.getElementById('spiValueContainer'); let colorClass = 'text-green-400'; if (spi < 0.9) { colorClass = 'text-red-400'; } else if (spi <= 0.98) { colorClass = 'text-yellow-400'; } container.innerHTML = `<div class="text-center"><p class="font-display text-7xl ${colorClass}">${spi.toFixed(2)}</p></div>`; }
+    function renderRagStatus(projectedEndDate, baselineEndDate, overdueTasksCount, totalTasks) { const container = document.getElementById('ragStatusContainer'); container.innerHTML = ''; const { time: timeStatus, tasks: tasksStatus } = getRagStates(projectedEndDate, baselineEndDate, overdueTasksCount, totalTasks); let timeColor, timeTooltip, tasksColor, tasksTooltip; if (timeStatus === 'Red') { timeColor = 'bg-red-500'; timeTooltip = "<b>Estado del Tiempo: Rojo</b><br>Riesgo Alto. El proyecto tiene un retraso significativo (más de 14 días)."; } else if (timeStatus === 'Amber') { timeColor = 'bg-yellow-500'; timeTooltip = "<b>Estado del Tiempo: Ámbar</b><br>Atención. Hay un ligero retraso (hasta 14 días) sobre la fecha planificada."; } else { timeColor = 'bg-green-500'; timeTooltip = "<b>Estado del Tiempo: Verde</b><br>¡Excelente! El proyecto está en camino de terminar en la fecha original o antes."; } if (tasksStatus === 'Red') { tasksColor = 'bg-red-500'; tasksTooltip = "<b>Estado de Tareas: Rojo</b><br>Problema. Más del 10% del total de las tareas están atrasadas."; } else if (tasksStatus === 'Amber') { tasksColor = 'bg-yellow-500'; tasksTooltip = "<b>Estado de Tareas: Ámbar</b><br>Precaución. Hay tareas atrasadas, pero representan menos del 10% del total."; } else { tasksColor = 'bg-green-500'; tasksTooltip = "<b>Estado de Tareas: Verde</b><br>¡Perfecto! No hay ninguna tarea atrasada en el proyecto."; } const createRagItem = (color, label, tooltipText) => ` <div class="text-center cursor-pointer" data-tooltip-text="${tooltipText.replace(/"/g, '&quot;')}"> <div class="w-16 h-16 rounded-full ${color} mx-auto mb-2 border-4 border-white/20 pointer-events-none"></div> <h4 class="font-display text-xl pointer-events-none">${label}</h4> </div>`; container.innerHTML = createRagItem(timeColor, 'Tiempo', timeTooltip) + createRagItem(tasksColor, 'Tareas', tasksTooltip); }
+    function setupGlobalTooltips() { const tooltip = document.getElementById('gantt-tooltip'); document.body.addEventListener('mousemove', (e) => { const target = e.target.closest('[data-tooltip-text]'); if (target) { tooltip.style.display = 'block'; tooltip.style.left = `${e.clientX + 15}px`; tooltip.style.top = `${e.clientY + 15}px`; tooltip.innerHTML = target.dataset.tooltipText; } else { const ganttBar = e.target.closest('.gantt-bar, .gantt-milestone'); if(!ganttBar) { tooltip.style.display = 'none'; } } }); document.body.addEventListener('mouseleave', () => { tooltip.style.display = 'none'; }); }
+    function renderTaskStats(stats) { const createTaskCard = (id, count, label, icon, colorClass) => { document.getElementById(id).innerHTML = ` <i data-lucide="${icon}" class="w-8 h-8 mx-auto mb-2 ${colorClass}"></i> <p class="font-display text-4xl text-white">${count}</p> <h4 class="font-display text-lg ${colorClass}">${label}</h4>`; }; createTaskCard('completedTasksCard', stats.completed.length, 'Completadas', 'check-circle-2', 'text-green-400'); createTaskCard('inProgressTasksCard', stats.inProgress.length, 'En Progreso', 'loader-2', 'text-blue-400'); createTaskCard('notStartedTasksCard', stats.notStarted.length, 'Por Iniciar', 'circle-dashed', 'text-gray-400'); createTaskCard('overdueTasksCard', stats.overdue.length, 'Atrasadas', 'alert-triangle', 'text-red-400'); lucide.createIcons(); document.getElementById('inProgressTasksCard').addEventListener('dblclick', () => showTaskModal('Tareas en Progreso', stats.inProgress)); document.getElementById('notStartedTasksCard').addEventListener('dblclick', () => showTaskModal('Tareas por Iniciar', stats.notStarted)); document.getElementById('overdueTasksCard').addEventListener('dblclick', () => showTaskModal('Tareas Atrasadas', stats.overdue)); }
+    function setupGanttFilters(projectStart, projectEnd) { const startDateInput = document.getElementById('ganttStartDate'); const endDateInput = document.getElementById('ganttEndDate'); startDateInput.value = new Date(projectStart).toISOString().split('T')[0]; endDateInput.value = new Date(projectEnd).toISOString().split('T')[0]; document.getElementById('regenerateGantt').addEventListener('click', filterAndRenderViews); const resourceFilter = document.getElementById('gantt-resource-filter'); resourceFilter.innerHTML = '<option value="all">Todos los Recursos</option>'; const resourceNames = new Set(); projectDataStore.resources.forEach(res => resourceNames.add(res.name)); [...resourceNames].sort().forEach(name => { if (name) { const option = document.createElement('option'); option.value = name; option.textContent = name; resourceFilter.appendChild(option); } }); document.getElementById('gantt-search').addEventListener('input', (e) => { ganttSearchTerm = e.target.value.toLowerCase(); filterAndRenderViews(); }); resourceFilter.addEventListener('change', (e) => { ganttResourceFilter = e.target.value; filterAndRenderViews(); }); document.querySelectorAll('#gantt-isolation-filter .gantt-view-btn').forEach(btn => { btn.addEventListener('click', () => { document.querySelector('#gantt-isolation-filter .gantt-view-btn.active').classList.remove('active'); btn.classList.add('active'); ganttIsolationFilter = btn.dataset.filter; filterAndRenderViews(); }); }); document.querySelectorAll('#gantt-timescale-toggle .gantt-view-btn').forEach(btn => { btn.addEventListener('click', () => { ganttViewMode = btn.dataset.view; document.querySelector('#gantt-timescale-toggle .gantt-view-btn.active').classList.remove('active'); btn.classList.add('active'); filterAndRenderViews(); }); }); document.querySelectorAll('#gantt-main-view-toggle .gantt-view-btn').forEach(btn => { btn.addEventListener('click', () => { ganttMainView = btn.dataset.view; document.querySelector('#gantt-main-view-toggle .gantt-view-btn.active').classList.remove('active'); btn.classList.add('active'); const isGantt = ganttMainView === 'gantt'; document.getElementById('gantt-controls').style.display = isGantt ? 'flex' : 'none'; document.getElementById('expandAll').style.display = isGantt ? 'inline-flex' : 'none'; document.getElementById('collapseAll').style.display = isGantt ? 'inline-flex' : 'none'; document.getElementById('gantt-chart-container').style.display = isGantt ? 'grid' : 'none'; document.getElementById('network-diagram-container').style.display = isGantt ? 'none' : 'block'; filterAndRenderViews(); }); }); document.getElementById('expandAll').addEventListener('click', () => { toggleAll(projectDataStore.tasks, false); filterAndRenderViews(); }); document.getElementById('collapseAll').addEventListener('click', () => { toggleAll(projectDataStore.tasks, true); filterAndRenderViews(); }); }
+    function toggleAll(tasks, collapse) { tasks.forEach(task => { if (task.isSummary) { task.isCollapsed = collapse; if (task.children) { toggleAll(task.children, collapse); } } }); }
+    function filterAndRenderViews() { if (!projectDataStore.tasks) return; let filteredTree = applyAdvancedFilters(projectDataStore.tasks); if (ganttMainView === 'gantt') { const filterStart = new Date(document.getElementById('ganttStartDate').value); const filterEnd = new Date(document.getElementById('ganttEndDate').value); let dateFilteredTree = filterTaskTree(filteredTree, filterStart, filterEnd); renderGanttChart(dateFilteredTree); } else { renderNetworkDiagram(filteredTree); } }
+    function applyAdvancedFilters(taskTree) { const resourceMap = projectDataStore.resources; function filterNode(node) { const nameMatch = ganttSearchTerm ? node.name.toLowerCase().includes(ganttSearchTerm) : true; const resourceMatch = (ganttResourceFilter === 'all') ? true : node.resourceIds.some(id => resourceMap.get(id)?.name === ganttResourceFilter); const isolationMatch = (ganttIsolationFilter === 'all') || (ganttIsolationFilter === 'critical' && node.isCritical) || (ganttIsolationFilter === 'milestones' && node.isMilestone); let filteredChildren = []; if (node.children && node.children.length > 0) { filteredChildren = node.children.map(filterNode).filter(child => child !== null); } if ((nameMatch && resourceMatch && isolationMatch) || filteredChildren.length > 0) { return { ...node, children: filteredChildren }; } return null; } return taskTree.map(filterNode).filter(node => node !== null); }
+    function filterTaskTree(tasks, rangeStart, rangeEnd) { const filtered = []; tasks.forEach(task => { const taskStart = new Date(task.start); const taskEnd = new Date(task.end); let children = []; if (task.children && task.children.length > 0) { children = filterTaskTree(task.children, rangeStart, rangeEnd); } const intersects = (taskEnd >= rangeStart && taskStart <= rangeEnd); if (intersects || children.length > 0) { filtered.push({ ...task, children: children }); } }); return filtered; }
+    function renderGanttChart(taskTree) { const container = document.getElementById('gantt-chart-container'); container.innerHTML = ` <div class="border-b border-r border-white/10 text-sm font-semibold flex items-center justify-center text-white/80 p-2">Tarea</div> <div id="gantt-timeline-header-wrapper" class="overflow-hidden border-b border-white/10"> <div id="gantt-timeline-header" class="h-[64px] relative"></div> </div> <div id="gantt-task-list" class="overflow-y-auto overflow-x-hidden border-r border-white/10"></div> <div id="gantt-timeline-wrapper" class="overflow-auto relative"> <div id="gantt-timeline" class="relative"></div> </div> `; const taskListEl = document.getElementById('gantt-task-list'); const timelineWrapperEl = document.getElementById('gantt-timeline-wrapper'); const timelineHeaderWrapperEl = document.getElementById('gantt-timeline-header-wrapper'); const timelineHeaderEl = document.getElementById('gantt-timeline-header'); const timelineEl = document.getElementById('gantt-timeline'); const filterStart = new Date(document.getElementById('ganttStartDate').value); const filterEnd = new Date(document.getElementById('ganttEndDate').value); const tooltip = document.getElementById('gantt-tooltip'); const DAY_WIDTH = 40; const WEEK_WIDTH = 60; const ROW_HEIGHT = 32; const unitWidth = ganttViewMode === 'day' ? DAY_WIDTH : WEEK_WIDTH; timelineHeaderEl.innerHTML = ''; if (ganttViewMode === 'day') { renderDayHeader(timelineHeaderEl, filterStart, filterEnd); } else { renderWeekHeader(timelineHeaderEl, filterStart, filterEnd); } let visibleRowCount = 0; function renderRows(tasks, parentIsCollapsed = false) { tasks.forEach(task => { const isCollapsed = task.isSummary && (task.isCollapsed === undefined ? true : task.isCollapsed); const isHidden = parentIsCollapsed; if (!isHidden) { const taskStart = new Date(task.start); const taskEnd = new Date(task.end); const keywordMilestone = /hito|sign off|entrega|fin/i.test(task.name); const isVisuallyMilestone = task.isMilestone || (taskStart.getTime() === taskEnd.getTime()) || keywordMilestone; const taskRow = document.createElement('div'); taskRow.className = 'gantt-row flex items-center text-sm px-2'; taskRow.style.paddingLeft = `${(task.outlineLevel - 1) * 20 + 8}px`; let toggleIcon = task.isSummary ? `<i data-lucide="chevron-down" class="toggle-btn shrink-0 mr-1 ${isCollapsed ? 'collapsed' : ''}"></i>` : (isVisuallyMilestone ? '<span class="text-[--bl-dorado] w-4 mr-1 text-center font-bold">◆</span>' : `<span class="w-4 mr-1"></span>`); taskRow.innerHTML = `${toggleIcon}<span class="gantt-task-name ${task.isSummary ? 'summary-task' : ''}" title="${task.name}">${task.name}</span>`; taskListEl.appendChild(taskRow); if (task.isSummary) { taskRow.querySelector('.toggle-btn').addEventListener('click', (e) => { e.stopPropagation(); task.isCollapsed = !isCollapsed; filterAndRenderViews(); }); } const offset = ganttViewMode === 'day' ? (taskStart - filterStart) / (1000 * 60 * 60 * 24) : (taskStart - filterStart) / (1000 * 60 * 60 * 24 * 7); let barContainer; if (isVisuallyMilestone) { barContainer = document.createElement('div'); barContainer.className = 'gantt-milestone'; barContainer.style.left = `${offset * unitWidth + (unitWidth / 2) - 8}px`; } else { const MS_DAY = 1000 * 60 * 60 * 24; const MS_WEEK = MS_DAY * 7; const unitMS = (ganttViewMode === 'day') ? MS_DAY : MS_WEEK; const chartStart = new Date(filterStart); const chartEnd = new Date(filterEnd); const visStart = (taskStart < chartStart) ? chartStart : taskStart; const visEnd = (taskEnd > chartEnd) ? chartEnd : taskEnd; if (visEnd < chartStart || visStart > chartEnd) { barContainer = document.createElement('div'); barContainer.className = 'gantt-bar'; barContainer.style.left = `0px`; barContainer.style.width = `0px`; } else { const barUnits = (visEnd - visStart) / unitMS; const barOffset = (visStart - chartStart) / unitMS; const barWidthPx = Math.max(0.001, barUnits * unitWidth); const progFrac = Math.max(0, Math.min(1, (task.percentComplete || 0) / 100)); const totalUnits = (taskEnd - taskStart) / unitMS; const progressAbsUnits = (taskStart - chartStart) / unitMS + totalUnits * progFrac; const barLeftUnits = (visStart - chartStart) / unitMS; const barRightUnits = (visEnd - chartStart) / unitMS; const clampedProgressUnits = Math.min(Math.max(progressAbsUnits, barLeftUnits), barRightUnits); const absMarkerPx = (clampedProgressUnits - barLeftUnits) * unitWidth; const absProgPx = Math.max(0, Math.min(barWidthPx, absMarkerPx)); const taskStartUnits = (taskStart - chartStart) / unitMS; const taskEndUnits = (taskEnd - chartStart) / unitMS; const visTaskStartUnits = Math.max(taskStartUnits, 0); const visTaskEndUnits = Math.min(taskEndUnits, (chartEnd - chartStart) / unitMS); const visibleTaskUnits = Math.max(0, visTaskEndUnits - visTaskStartUnits); const progressVisEndUnits = Math.min(Math.max(progressAbsUnits, visTaskStartUnits), visTaskEndUnits); const rel = visibleTaskUnits > 0 ? (progressVisEndUnits - visTaskStartUnits) / visibleTaskUnits : 0; const visMarkerPx = rel * barWidthPx; const visProgPx = visMarkerPx; const markerPx = absMarkerPx; const progPx = absProgPx; barContainer = document.createElement('div'); barContainer.className = 'gantt-bar'; barContainer.style.left = `${barOffset * unitWidth}px`; barContainer.style.width = `${barWidthPx}px`; const track = document.createElement('div'); track.className = (task.isSummary) ? 'absolute top-0 left-0 w-full h-full rounded-md gantt-track-summary' : 'absolute top-0 left-0 w-full h-full rounded-md bg-gray-700'; barContainer.appendChild(track); let colorClass; if (task.isSummary) { colorClass = 'bg-[--bl-dorado]'; } else if (progFrac < 0.25) { colorClass = 'bg-red-500'; } else if (progFrac < 0.50) { colorClass = 'bg-amber-500'; } else if (progFrac < 0.75) { colorClass = 'bg-blue-500'; } else { colorClass = 'bg-green-500'; } const progress = document.createElement('div'); progress.className = `gantt-progress ${colorClass} ${task.isSummary ? 'gantt-progress-summary' : ''}`.trim(); progress.style.width = `${progPx}px`; barContainer.appendChild(progress); const marker = document.createElement('div'); marker.className = 'gantt-progress-marker'; marker.style.left = `${Math.max(0, Math.min(barWidthPx - 2, (typeof markerPx!=='undefined'?markerPx:progPx) - 1))}px`; barContainer.appendChild(marker); const badge = document.createElement('span'); badge.className = 'gantt-percent-badge'; badge.textContent = `${task.percentComplete}%`; const badgeWidthGuess = 34; const padding = 6; const preferRight = (progPx + badgeWidthGuess + padding) <= barWidthPx; badge.style.left = preferRight ? `${progPx + padding}px` : `${Math.max(0, progPx - badgeWidthGuess - padding)}px`; barContainer.appendChild(badge); } } barContainer.style.top = `${visibleRowCount * ROW_HEIGHT}px`; timelineEl.appendChild(barContainer); barContainer.addEventListener('mousemove', e => { tooltip.style.display = 'block'; tooltip.style.left = `${e.clientX + 15}px`; tooltip.style.top = `${e.clientY + 15}px`; let tooltipContent = `<strong>${task.name}</strong><br>Inicio: ${formatDate(task.start)}`; if (!isVisuallyMilestone) { tooltipContent += `<br>Fin: ${formatDate(task.end)}<br>Avance: ${task.percentComplete}%`; } tooltip.innerHTML = tooltipContent; }); barContainer.addEventListener('mouseleave', () => tooltip.style.display = 'none'); visibleRowCount++; } if (task.children && task.children.length > 0) { renderRows(task.children, isHidden || isCollapsed); } }); } renderRows(taskTree); const totalHeight = visibleRowCount * ROW_HEIGHT; taskListEl.style.height = `${totalHeight}px`; timelineEl.style.height = `${totalHeight}px`; let isSyncingScroll = false; timelineWrapperEl.addEventListener('scroll', () => { if (isSyncingScroll) return; isSyncingScroll = true; taskListEl.scrollTop = timelineWrapperEl.scrollTop; timelineHeaderWrapperEl.scrollLeft = timelineWrapperEl.scrollLeft; isSyncingScroll = false; }); taskListEl.addEventListener('scroll', () => { if (isSyncingScroll) return; isSyncingScroll = true; timelineWrapperEl.scrollTop = taskListEl.scrollTop; isSyncingScroll = false; }); lucide.createIcons(); }
+    function renderDayHeader(headerEl, filterStart, filterEnd) { const totalDays = Math.max(0, Math.round((filterEnd - filterStart) / (1000 * 60 * 60 * 24))); const chartWidth = totalDays * 40; headerEl.style.width = `${chartWidth}px`; const monthNames = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"]; const monthsEl = document.createElement('div'); monthsEl.className = 'flex gantt-row'; const daysEl = document.createElement('div'); daysEl.className = 'flex gantt-row'; headerEl.appendChild(monthsEl); headerEl.appendChild(daysEl); let currentMonth = -1; let monthDayCount = 0; let lastMonthDiv = null; for (let i = 0; i <= totalDays; i++) { const date = new Date(filterStart); date.setUTCDate(date.getUTCDate() + i); const month = date.getUTCMonth(); const dayDiv = document.createElement('div'); dayDiv.className = 'shrink-0 text-center text-xs text-white/60 border-r border-white/10 flex items-center justify-center'; dayDiv.style.width = '40px'; dayDiv.textContent = date.getUTCDate(); daysEl.appendChild(dayDiv); if (month !== currentMonth) { if (lastMonthDiv) lastMonthDiv.style.width = `${monthDayCount * 40}px`; monthDayCount = 0; currentMonth = month; const monthName = `${monthNames[month]} ${date.getUTCFullYear()}`; const monthDiv = document.createElement('div'); monthDiv.className = 'shrink-0 border-r border-white/10 text-center font-semibold text-sm flex items-center justify-center'; monthDiv.textContent = monthName; monthsEl.appendChild(monthDiv); lastMonthDiv = monthDiv; } monthDayCount++; } if (lastMonthDiv) lastMonthDiv.style.width = `${monthDayCount * 40}px`; }
+    function renderWeekHeader(headerEl, filterStart, filterEnd) { const totalWeeks = Math.max(0, Math.ceil(((filterEnd - filterStart) / (1000 * 60 * 60 * 24)) / 7)); const chartWidth = totalWeeks * 60; headerEl.style.width = `${chartWidth}px`; const monthNames = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"]; const monthsEl = document.createElement('div'); monthsEl.className = 'flex gantt-row'; const weeksEl = document.createElement('div'); weeksEl.className = 'flex gantt-row'; headerEl.appendChild(monthsEl); headerEl.appendChild(weeksEl); let currentMonth = -1; let monthWeekCount = 0; let lastMonthDiv = null; let weekStartDate = new Date(filterStart); while (weekStartDate < filterEnd) { const month = weekStartDate.getUTCMonth(); const weekDiv = document.createElement('div'); weekDiv.className = 'shrink-0 text-center text-xs text-white/60 border-r border-white/10 flex items-center justify-center'; weekDiv.style.width = '60px'; weekDiv.textContent = `S${getWeekNumber(weekStartDate)}`; weeksEl.appendChild(weekDiv); if (month !== currentMonth) { if (lastMonthDiv) lastMonthDiv.style.width = `${monthWeekCount * 60}px`; monthWeekCount = 0; currentMonth = month; const monthName = `${monthNames[month]} ${weekStartDate.getUTCFullYear()}`; const monthDiv = document.createElement('div'); monthDiv.className = 'shrink-0 border-r border-white/10 text-center font-semibold text-sm flex items-center justify-center'; monthDiv.textContent = monthName; monthsEl.appendChild(monthDiv); lastMonthDiv = monthDiv; } monthWeekCount++; weekStartDate.setUTCDate(weekStartDate.getUTCDate() + 7); } if (lastMonthDiv) lastMonthDiv.style.width = `${monthWeekCount * 60}px`; }
+    function getWeekNumber(d) { d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate())); d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay()||7)); var yearStart = new Date(Date.UTC(d.getUTCFullYear(),0,1)); var weekNo = Math.ceil(( ( (d - yearStart) / 86400000) + 1)/7); return weekNo; }
+    function renderNetworkDiagram(taskTree) { const container = document.getElementById('network-diagram-container'); const flatTasks = flattenTasks(taskTree).filter(t => !t.isSummary && t.id); if(flatTasks.length === 0) { container.innerHTML = '<p class="text-center text-white/50 p-8">No hay tareas que mostrar con los filtros aplicados.</p>'; return; } const tasksMap = new Map(flatTasks.map(t => [t.id, t])); const levels = new Map(); let maxLevel = 0; function calculateLevel(task) { if (!task || !task.id) return 0; if (levels.has(task.id)) return levels.get(task.id); if (!task.predecessors || task.predecessors.length === 0) { levels.set(task.id, 0); return 0; } let maxPredLevel = 0; task.predecessors.forEach(p => { const predTask = tasksMap.get(p.uid); if (predTask) { maxPredLevel = Math.max(maxPredLevel, calculateLevel(predTask)); } }); const level = maxPredLevel + 1; levels.set(task.id, level); maxLevel = Math.max(maxLevel, level); return level; } flatTasks.forEach(task => calculateLevel(task)); const nodesByLevel = Array(maxLevel + 1).fill(0).map(() => []); flatTasks.forEach(task => { const level = levels.get(task.id); if (level !== undefined && nodesByLevel[level]) { nodesByLevel[level].push(task); } }); const PADDING = 50; const NODE_WIDTH = 150; const NODE_HEIGHT = 60; const H_GAP = 80; const V_GAP = 40; const width = (maxLevel + 1) * (NODE_WIDTH + H_GAP) + PADDING * 2; const maxHeight = nodesByLevel.reduce((max, level) => Math.max(max, level.length), 0); const height = maxHeight * (NODE_HEIGHT + V_GAP) + PADDING * 2; const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg'); svg.setAttribute('width', width); svg.setAttribute('height', height); const nodePositions = new Map(); let svgDefs = `<defs><marker id="arrowhead" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#fff" opacity="0.5"></path></marker></defs>`; let svgLinks = ''; let svgNodes = ''; nodesByLevel.forEach((tasksInLevel, levelIndex) => { const levelHeight = tasksInLevel.length * (NODE_HEIGHT + V_GAP); const startY = (height - levelHeight) / 2; tasksInLevel.forEach((task, taskIndex) => { const x = PADDING + levelIndex * (NODE_WIDTH + H_GAP); const y = startY + taskIndex * (NODE_HEIGHT + V_GAP); nodePositions.set(task.id, { x, y }); let color = '#374151'; if (task.percentComplete === 100) color = '#16a34a'; else if (new Date(task.end) < new Date() && task.percentComplete < 100) color = '#dc2626'; else if (task.percentComplete > 0) color = '#2563eb'; let stroke = task.isCritical ? '#f59e0b' : 'rgba(255,255,255,0.2)'; svgNodes += ` <g transform="translate(${x}, ${y})"> <rect width="${NODE_WIDTH}" height="${NODE_HEIGHT}" rx="8" fill="${color}" stroke="${stroke}" stroke-width="2"></rect> <foreignObject width="${NODE_WIDTH}" height="${NODE_HEIGHT}"> <div xmlns="http://www.w3.org/1999/xhtml" class="text-white p-2 text-xs overflow-hidden h-full flex flex-col justify-center"> <p class="font-bold whitespace-nowrap overflow-hidden text-ellipsis" title="${task.name}">${task.name}</p> <p>${formatDate(task.start)} - ${formatDate(task.end)}</p> </div> </foreignObject> </g> `; }); }); flatTasks.forEach(task => { if (task.predecessors) { task.predecessors.forEach(p => { const predPos = nodePositions.get(p.uid); const taskPos = nodePositions.get(task.id); if (predPos && taskPos) { const x1 = predPos.x + NODE_WIDTH; const y1 = predPos.y + NODE_HEIGHT / 2; const x2 = taskPos.x; const y2 = taskPos.y + NODE_HEIGHT / 2; const isCriticalLink = tasksMap.get(p.uid)?.isCritical && task.isCritical; const stroke = isCriticalLink ? '#f59e0b' : 'rgba(255,255,255,0.5)'; svgLinks += `<path d="M ${x1} ${y1} C ${x1 + H_GAP / 2} ${y1}, ${x2 - H_GAP / 2} ${y2}, ${x2} ${y2}" stroke="${stroke}" stroke-width="1.5" fill="none" marker-end="url(#arrowhead)"></path>`; } }); } }); svg.innerHTML = svgDefs + svgLinks + svgNodes; container.innerHTML = ''; container.appendChild(svg); }
+    function setupUpcomingTasksFilter() { const daysInput = document.getElementById('upcoming-days'); const filterButtons = document.querySelectorAll('#upcoming-task-filter .gantt-view-btn'); const updateView = () => { const days = parseInt(daysInput.value) || 7; const activeFilter = document.querySelector('#upcoming-task-filter .gantt-view-btn.active').dataset.filter; renderUpcomingTasks(days, activeFilter); }; daysInput.addEventListener('change', updateView); filterButtons.forEach(btn => { btn.addEventListener('click', () => { filterButtons.forEach(b => b.classList.remove('active')); btn.classList.add('active'); updateView(); }); }); }
+    function renderUpcomingTasks(days, filter) { const container = document.getElementById('upcomingTaskList'); container.innerHTML = ''; const today = new Date(); const futureDate = new Date(); futureDate.setDate(today.getDate() + days); let tasks = flattenTasks(projectDataStore.tasks).filter(t => !t.isSummary); if (filter === 'critical') tasks = tasks.filter(t => t.isCritical); if (filter === 'milestones') tasks = tasks.filter(t => t.isMilestone); const upcoming = tasks.filter(t => { const startDate = new Date(t.start); return t.percentComplete < 100 && startDate >= today && startDate <= futureDate; }).sort((a,b) => new Date(a.start) - new Date(b.start)); if (upcoming.length === 0) { container.innerHTML = `<li class="flex items-center text-sm text-green-400"><i data-lucide="calendar-check-2" class="w-4 h-4 shrink-0 mr-2"></i>No hay tareas clave comenzando pronto.</li>`; } else { upcoming.slice(0, 10).forEach(task => { const item = document.createElement('li'); item.className = 'flex items-start text-sm'; let icon = 'calendar-plus'; let iconColor = 'text-blue-400'; if (task.isCritical) { icon = 'alert-triangle'; iconColor = 'text-amber-400'; } if (task.isMilestone) { icon = 'award'; iconColor = 'text-[--bl-dorado]'; } item.innerHTML = ` <i data-lucide="${icon}" class="w-4 h-4 shrink-0 mr-2 mt-0.5 ${iconColor}"></i> <div> <span class="font-semibold text-white">${task.name}</span> <span class="block text-white/60 text-xs">Comienza: ${formatDate(task.start)}</span> </div>`; container.appendChild(item); }); } lucide.createIcons(); }
+    function setupBurnUpFilters(projectStart, projectEnd) { const startDateInput = document.getElementById('burnupStartDate'); const endDateInput = document.getElementById('burnupEndDate'); startDateInput.value = new Date(projectStart).toISOString().split('T')[0]; endDateInput.value = new Date(projectEnd).toISOString().split('T')[0]; document.getElementById('regenerateBurnup').addEventListener('click', () => { const flatTaskList = flattenTasks(projectDataStore.tasks).filter(t => !t.isSummary); filterAndRenderBurnup(flatTaskList); }); document.querySelectorAll('#burnup-view-toggle .gantt-view-btn').forEach(btn => { btn.addEventListener('click', () => { burnupViewMode = btn.dataset.view; document.querySelector('#burnup-view-toggle .gantt-view-btn.active').classList.remove('active'); btn.classList.add('active'); const flatTaskList = flattenTasks(projectDataStore.tasks).filter(t => !t.isSummary); filterAndRenderBurnup(flatTaskList); }); }); }
+    function filterAndRenderBurnup(executableTasks) { if (!executableTasks) return; const filterStart = new Date(document.getElementById('burnupStartDate').value); const filterEnd = new Date(document.getElementById('burnupEndDate').value); renderBurnUpChart(executableTasks, filterStart, filterEnd); }
+    function renderBurnUpChart(tasks, startDate, endDate) { document.getElementById('burnupChart').innerHTML = ''; const burnupData = generateBurnUpData(tasks, startDate, endDate); const options = { series: [ { name: 'Plan de Finalización (Curva S)', data: burnupData.planned }, { name: 'Avance Real', data: burnupData.completed } ], chart: { type: 'area', height: 350, toolbar: { show: false }, background: 'transparent' }, dataLabels: { enabled: false }, stroke: { curve: 'smooth', width: 2 }, xaxis: { type: 'datetime', categories: burnupData.categories, labels: { style: { colors: '#FFFFFF' }, formatter: function(value, timestamp) { if (timestamp) { const date = new Date(timestamp); if (burnupViewMode === 'week') { const week = getWeekNumber(date); const month = date.toLocaleString('es-AR', { month: 'short', timeZone: 'UTC' }); const year = date.getUTCFullYear(); const capitalizedMonth = month.charAt(0).toUpperCase() + month.slice(1).replace('.',''); return `S${week} - ${capitalizedMonth} ${year}`; } return date.toLocaleDateString('es-AR', {day:'2-digit', month:'2-digit', timeZone:'UTC'}); } return value; }, rotate: -45, hideOverlappingLabels: true, } }, yaxis: { labels: { style: { colors: '#FFFFFF' }, formatter: function (value) { return Math.round(value); } }, title: { text: 'Nº de Tareas', style: { color: '#FFFFFF', fontWeight: 'normal'} } }, tooltip: { theme: 'dark', x: { formatter: function(value) { const date = new Date(value); return `${burnupViewMode === 'week' ? 'Semana del' : ''} ${date.toLocaleDateString('es-AR', {day:'2-digit', month:'2-digit', year:'numeric', timeZone:'UTC'})}`; } } }, grid: { borderColor: 'rgba(255,255,255,0.2)' }, legend: { labels: { colors: '#FFFFFF' } }, colors: ['#FFFFFF', 'var(--bl-dorado)'] }; new ApexCharts(document.querySelector("#burnupChart"), options).render(); }
+    function renderMilestoneTimeline(tasks) { const container = document.getElementById('milestoneTimeline'); container.innerHTML = ''; tasks.filter(t => t.isMilestone).forEach(milestone => { const isCompleted = milestone.percentComplete === 100; const item = document.createElement('div'); item.className = 'relative pl-8 pb-8 timeline-item'; item.innerHTML = `<div class="timeline-dot ${isCompleted ? 'completed' : ''}"></div><p class="text-sm text-white/60">${formatDate(milestone.start)}</p><h5 class="font-semibold text-white">${milestone.name}</h5>`; container.appendChild(item); }); }
+    function renderCriticalPath(tasks) { const container = document.getElementById('criticalPathList'); container.innerHTML = ''; tasks.filter(t => t.isCritical && !t.isMilestone).forEach(task => { const item = document.createElement('li'); item.className = 'flex items-center text-sm'; item.innerHTML = `<i data-lucide="link-2" class="w-4 h-4 shrink-0 mr-2 text-white/50"></i><span class="truncate">${task.name}</span>`; container.appendChild(item); }); lucide.createIcons(); }
+    function renderFocoCritico(tasks, today) { const container = document.getElementById('focoCriticoList'); container.innerHTML = ''; const sevenDaysFromNow = new Date(today); sevenDaysFromNow.setDate(today.getDate() + 7); const focoTasks = new Map(); tasks.filter(t => t.isCritical && t.percentComplete === 0 && new Date(t.start) >= today && new Date(t.start) <= sevenDaysFromNow) .forEach(t => { if (!focoTasks.has(t.id)) { focoTasks.set(t.id, { task: t, reasons: [] }); } focoTasks.get(t.id).reasons.push({ text: 'Inicio Inminente', color: 'text-blue-400', icon: 'play-circle' }); }); tasks.filter(t => t.isCritical && t.percentComplete > 0 && t.percentComplete < 50) .sort((a, b) => a.percentComplete - b.percentComplete) .slice(0, 5) .forEach(t => { if (!focoTasks.has(t.id)) { focoTasks.set(t.id, { task: t, reasons: [] }); } focoTasks.get(t.id).reasons.push({ text: `Bajo Avance (${t.percentComplete}%)`, color: 'text-yellow-400', icon: 'trending-down' }); }); tasks.filter(t => t.isCritical && t.percentComplete < 100 && new Date(t.end) < today) .forEach(t => { if (!focoTasks.has(t.id)) { focoTasks.set(t.id, { task: t, reasons: [] }); } focoTasks.get(t.id).reasons.push({ text: 'Atrasada', color: 'text-red-400', icon: 'alert-triangle' }); }); if (focoTasks.size === 0) { container.innerHTML = `<li class="flex items-center text-sm text-green-400"><i data-lucide="shield-check" class="w-4 h-4 shrink-0 mr-2"></i>No se identifican tareas de foco crítico.</li>`; } else { focoTasks.forEach(data => { const item = document.createElement('li'); item.className = 'flex items-start text-sm'; const reasonsHTML = data.reasons.map(reason => `<span class="text-xs font-semibold px-2 py-0.5 rounded-full ${reason.color} bg-opacity-20 bg-current mr-2">${reason.text}</span>` ).join(''); item.innerHTML = ` <i data-lucide="target" class="w-4 h-4 shrink-0 mr-2 mt-0.5 text-[--bl-dorado]"></i> <div> <span class="font-semibold text-white">${data.task.name}</span> <div class="flex flex-wrap mt-1">${reasonsHTML}</div> </div>`; container.appendChild(item); }); } lucide.createIcons(); }
+    function renderRisks(tasks, today) { const container = document.getElementById('riskList'); container.innerHTML = ''; const risks = []; tasks.filter(t => new Date(t.end) < today && t.percentComplete < 100).forEach(t => risks.push({ type: 'Tarea Atrasada', text: t.name })); if (risks.length === 0) { container.innerHTML = `<li class="flex items-center text-sm text-green-400"><i data-lucide="shield-check" class="w-4 h-4 shrink-0 mr-2"></i>No se han detectado riesgos mayores.</li>`; } else { risks.forEach(risk => { const item = document.createElement('li'); item.className = 'flex items-start text-sm'; item.innerHTML = `<i data-lucide="alert-triangle" class="w-4 h-4 shrink-0 mr-2 mt-0.5 text-yellow-400"></i><div><span class="font-semibold text-white">${risk.type}:</span><span class="text-white/80"> ${risk.text}</span></div>`; container.appendChild(item); }); } lucide.createIcons(); }
+    function renderResourceLoadChart(tasks, resourcesMap) { const chartEl = document.getElementById('resourceLoadChart'); chartEl.innerHTML = ''; const genericResourceLoad = getResourceLoadData(tasks, resourcesMap); if (genericResourceLoad.size === 0) { chartEl.innerHTML = '<p class="text-center text-white/50">No hay recursos asignados a tareas.</p>'; return; } const sortedResources = [...genericResourceLoad.entries()].sort((a,b) => b[1].count - a[1].count); const avgTasks = tasks.length / genericResourceLoad.size; const chartData = sortedResources.map(([name, data]) => ({ x: data.count, y: name, fillColor: data.count > avgTasks * 1.5 ? '#ef4444' : (data.count > avgTasks * 1.1 ? 'var(--bl-dorado)' : 'var(--bl-azul-principal)') })); const options = { series: [{ data: chartData }], chart: { type: 'bar', height: 100 + sortedResources.length * 30, background: 'transparent', toolbar: { show: false }, events: { dataPointSelection: (event, chartContext, config) => { const resourceName = config.w.globals.labels[config.dataPointIndex]; const allTasksForRole = []; tasks.forEach(task => { const hasResource = task.resourceIds.some(resId => { const resource = resourcesMap.get(resId); return resource && resource.name.replace(/\s*\d+\s*$/, '').trim() === resourceName; }); if (hasResource) { allTasksForRole.push(task); } }); showTaskModal(`Tareas asignadas a: ${resourceName}`, allTasksForRole, true); } } }, plotOptions: { bar: { borderRadius: 4, horizontal: true, distributed: true, dataLabels: { position: 'top' } } }, dataLabels: { enabled: true, offsetX: 15, style: { colors: ['#fff'], fontSize: '12px' } }, legend: { show: false }, xaxis: { categories: sortedResources.map(([name, data]) => name), labels: { style: { colors: '#FFFFFF' } }, title: { text: 'Nº de Tareas Asignadas', style: { color: '#FFFFFF', fontWeight: 'normal'} } }, yaxis: { labels: { style: { colors: '#FFFFFF' } } }, grid: { borderColor: 'rgba(255,255,255,0.1)' } }; new ApexCharts(chartEl, options).render(); }
+    function formatDate(dateStr) { if (!dateStr) return 'N/A'; const date = new Date(dateStr); return date.toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'UTC' }); }
+    function generateBurnUpData(tasks, startDate, endDate) { const data = { planned: [], completed: [], categories: [] }; if (!startDate || !endDate || startDate > endDate) return data; const relevantTasks = tasks.filter(t => { const taskEnd = new Date(t.end); return taskEnd >= startDate && taskEnd <= endDate; }); const increment = burnupViewMode === 'day' ? 1 : 7; for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + increment)) { const datePoint = d.toISOString().split('T')[0]; data.categories.push(datePoint); const plannedOnDate = relevantTasks.filter(t => new Date(t.end) <= d).length; data.planned.push(plannedOnDate); const completedOnDate = relevantTasks.filter(t => t.percentComplete === 100 && new Date(t.end) <= d).length; data.completed.push(completedOnDate); } return data; }
+    function showTaskModal(title, tasks) { 
+        const modal = document.getElementById('task-modal'); 
+        const modalTitle = document.getElementById('modal-title'); 
+        const modalContent = document.getElementById('modal-content'); 
+        
+        modalTitle.textContent = title; 
+        
+        if (typeof tasks === 'string') {
+             modalContent.innerHTML = tasks; // Inject HTML string (for IA output/loading)
+        } else if (Array.isArray(tasks)) {
+            modalContent.innerHTML = ''; 
+            if (tasks.length === 0) { 
+                modalContent.innerHTML = '<p class="text-white/60">No hay tareas para mostrar en esta categoría.</p>'; 
+            } else { 
+                let tableHTML = ` <table class="w-full text-sm text-left table-fixed"> <thead class="text-xs text-white/70 uppercase"> <tr> <th scope="col" class="px-4 py-2 w-[40%]">Nombre Tarea</th> <th scope="col" class="px-4 py-2 w-[20%]">Recurso(s)</th> <th scope="col" class="px-4 py-2 w-[15%]">Fecha Inicio</th> <th scope="col" class="px-4 py-2 w-[15%]">Fecha Fin</th> <th scope="col" class="px-4 py-2 w-[10%] text-right">Avance</th> </tr> </thead> <tbody> `; 
+                tasks.forEach(task => { 
+                    const resourceNames = task.resourceIds.map(id => projectDataStore.resources.get(id)?.name || '').join(', '); 
+                    tableHTML += ` <tr class="border-b border-white/10 hover:bg-white/5"> <td class="px-4 py-2 font-medium truncate" title="${task.name}">${task.name}</td> <td class="px-4 py-2 text-xs truncate" title="${resourceNames}">${resourceNames}</td> <td class="px-4 py-2">${formatDate(task.start)}</td> <td class="px-4 py-2">${formatDate(task.end)}</td> <td class="px-4 py-2 text-right">${task.percentComplete}%</td> </tr> `; 
+                }); 
+                tableHTML += '</tbody></table>'; 
+                modalContent.innerHTML = tableHTML; 
+            } 
+        }
+        
+        modal.classList.remove('hidden'); 
+        modal.classList.add('flex'); 
+    }
+    const modal = document.getElementById('task-modal'); document.getElementById('modal-close-btn').addEventListener('click', () => modal.classList.add('hidden')); modal.addEventListener('click', (e) => { if (e.target.id === 'task-modal') { modal.classList.add('hidden'); } }); document.addEventListener('keydown', (e) => { if (e.key === "Escape" && !modal.classList.contains('hidden')) { modal.classList.add('hidden'); } });
+    
+    /**
+     * Reemplazo de la función anterior de resumen manual (DEPRECATED: mantener la referencia para el addExportFunctionality)
+     */
+    function generateExecutiveSummary() {
+        // Esta función ahora solo es un placeholder. La lógica IA es en generateExecutiveSummaryAI.
+        const contentArea = document.getElementById('executive-summary-content');
+        contentArea.innerHTML = '<p class="text-yellow-400 italic">Esta es la función de resumen manual/pre-calculado. Use "Generar Resumen IA" para el análisis inteligente.</p>';
+    }
+
+
+    function addExportFunctionality(data) { const addClickListener = (id, generator) => { const button = document.getElementById(id); if (!button) return; const newButton = button.cloneNode(true); button.parentNode.replaceChild(newButton, button); newButton.addEventListener('click', generator); }; addClickListener('exportGanttJPG', () => exportElementAsJPG('gantt-container-for-export', 'exportGanttJPG')); addClickListener('exportBurnupJPG', () => exportElementAsJPG('burnup-container-for-export', 'exportBurnupJPG')); addClickListener('exportResourcesJPG', () => exportElementAsJPG('resources-container-for-export', 'exportResourcesJPG')); addClickListener('exportMilestonesJPG', () => exportElementAsJPG('milestones-container-for-export', 'exportMilestonesJPG')); addClickListener('exportCriticalPathJPG', () => exportElementAsJPG('criticalpath-container-for-export', 'exportCriticalPathJPG')); addClickListener('exportFocoCriticoJPG', () => exportElementAsJPG('foco-critico-container-for-export', 'exportFocoCriticoJPG')); addClickListener('exportRisksJPG', () => exportElementAsJPG('risks-container-for-export', 'exportRisksJPG')); addClickListener('exportSPIJPG', () => exportElementAsJPG('spi-container-for-export', 'exportSPIJPG')); addClickListener('exportTrendJPG', () => exportElementAsJPG('trend-analysis-container-for-export', 'exportTrendJPG')); addClickListener('exportUpcomingJPG', () => exportElementAsJPG('upcoming-tasks-container-for-export', 'exportUpcomingJPG')); addClickListener('exportAllTasks', () => { const csvData = generateHierarchicalCSVData(projectDataStore.tasks); exportToCSV(csvData, 'gantt_proyecto.csv'); }); 
+    // Mantiene la referencia a la función de IA
+    addClickListener('generate-summary-btn', generateExecutiveSummaryAI); 
+    addClickListener('exportSummaryJPG', () => exportElementAsJPG('summary-container-for-export', 'exportSummaryJPG')); 
+    // Añadir el nuevo botón de exportación para Riesgos Predictivos
+    addClickListener('analyze-risks-btn', generatePredictiveRisksAI);
+    addClickListener('exportRisksPredictiveJPG', () => exportElementAsJPG('predictive-risks-container', 'exportRisksPredictiveJPG'));
+    }
+    
+    // --- FUNCIÓN DE EXPORTACIÓN ACTUALIZADA ---
+    async function exportElementAsJPG(elementId, buttonId) {
+        const containerToExport = document.getElementById(elementId);
+        const button = document.getElementById(buttonId);
+        const originalButtonHTML = button ? button.innerHTML : '';
+        if (button) {
+            button.innerHTML = 'Generando...';
+            button.disabled = true;
+        }
+
+        // 1. Clonar el contenedor
+        const clone = containerToExport.cloneNode(true);
+        clone.id = `${elementId}-clone`;
+        clone.style.position = 'absolute';
+        clone.style.top = '-10000px';
+        clone.style.left = '0';
+        clone.style.zIndex = '-1';
+        clone.style.width = containerToExport.scrollWidth + 'px';
+        clone.style.maxWidth = 'none';
+        clone.style.maxHeight = 'none';
+
+        // --- INICIO: MODO PRESENTACIÓN AUTOMÁTICO ---
+
+        // 2. Aplicar estilos de presentación base al clon
+        clone.style.fontSize = '110%';
+
+        // 3. Ocultar todos los elementos de UI marcados con .no-export
+        clone.querySelectorAll('.no-export').forEach(el => {
+            el.style.display = 'none';
+        });
+
+        // 4. Función mejorada para asegurar que todo el contenido sea visible
+        const expandOverflow = (root) => {
+            // Añadir una regla de estilo para ocultar scrollbars de Webkit en el clon
+            const style = document.createElement('style');
+            style.innerHTML = `#${root.id} ::-webkit-scrollbar { display: none; }`;
+            root.appendChild(style);
+
+            root.querySelectorAll('*').forEach(el => {
+                const cs = getComputedStyle(el);
+                const needsHeight = el.scrollHeight > el.clientHeight;
+                const needsWidth = el.scrollWidth > el.clientWidth;
+
+                // Forzar la visibilidad para expandir el contenido
+                if (cs.overflowY !== 'visible') el.style.overflowY = 'visible';
+                if (cs.overflowX !== 'visible') el.style.overflowX = 'visible';
+                
+                // Ajustar dimensiones si el contenido está recortado
+                if (needsHeight) { el.style.height = el.scrollHeight + 'px'; }
+                if (needsWidth) { el.style.width = el.scrollWidth + 'px'; }
+
+                // Limpiar restricciones y scrollbars de Firefox
+                el.style.maxHeight = 'none';
+                el.style.maxWidth = 'none';
+                el.style.scrollbarWidth = 'none';
+            });
+        };
+        
+        // --- FIN: MODO PRESENTACIÓN ---
+
+        document.body.appendChild(clone);
+
+        // 5. Ejecutar la función para expandir y limpiar el clon
+        expandOverflow(clone);
+
+        // --- Lógica original para copiar canvas y generar imagen ---
+        const originalCanvases = containerToExport.querySelectorAll('canvas');
+        const clonedCanvases = clone.querySelectorAll('canvas');
+        for (let i = 0; i < clonedCanvases.length; i++) {
+            const src = originalCanvases[i];
+            const dst = clonedCanvases[i];
+            if (src && dst) {
+                dst.width = src.width;
+                dst.height = src.height;
+                const ctx = dst.getContext('2d');
+                try {
+                    ctx.drawImage(src, 0, 0);
+                } catch (e) {
+                    console.warn('No se pudo copiar un canvas:', e);
+                }
+            }
+        }
+
+        await new Promise(r => setTimeout(r, 100)); // Pequeña pausa para renderizado
+
+        try {
+            const exportWidth = Math.max(clone.scrollWidth, containerToExport.scrollWidth, clone.clientWidth);
+            const exportHeight = Math.max(clone.scrollHeight, containerToExport.scrollHeight, clone.clientHeight);
+
+            const canvas = await html2canvas(clone, {
+                backgroundColor: getComputedStyle(document.documentElement).getPropertyValue('--bl-azul-oscuro').trim() || null,
+                scale: 2,
+                useCORS: true,
+                allowTaint: false,
+                logging: false,
+                width: exportWidth,
+                height: exportHeight,
+                windowWidth: exportWidth,
+                windowHeight: exportHeight,
+                scrollX: 0,
+                scrollY: 0,
+            });
+
+            const link = document.createElement('a');
+            const fileName = `${elementId.split('-')[0]}_proyecto_${new Date().toISOString().split('T')[0]}.jpg`;
+            link.download = fileName;
+            link.href = canvas.toDataURL('image/jpeg', 0.95);
+            link.click();
+
+        } catch (err) {
+            console.error("Error al exportar JPG:", err);
+            // Replaced alert
+            const contentArea = document.getElementById('executive-summary-content');
+            contentArea.innerHTML = `<p class="text-red-400 font-semibold">Hubo un problema al generar la imagen. Consulta la consola para más detalles.</p>`;
+        } finally {
+            document.body.removeChild(clone);
+            if (button) {
+                button.innerHTML = originalButtonHTML;
+                button.disabled = false;
+            }
+            if (window.lucide && window.lucide.createIcons) {
+                lucide.createIcons();
+            }
+        }
+    }
+
+    function generateHierarchicalCSVData(taskTree) { const csvData = []; function traverse(tasks, prefix) { tasks.forEach((task, index) => { const wbs = prefix ? `${prefix}.${index + 1}` : `${index + 1}`; const indentation = ' '.repeat(task.outlineLevel - 1); csvData.push({ 'ID (WBS)': wbs, 'Nivel': task.outlineLevel, 'Nombre Tarea': `${indentation}${task.name}`, 'Es Resumen': task.isSummary ? 'Sí' : 'No', 'Inicio': formatDate(task.start), 'Fin': formatDate(task.end), 'Avance (%)': task.percentComplete, 'Crítica': task.isCritical ? 'Sí' : 'No' }); if (task.children && task.children.length > 0) { traverse(task.children, wbs); } }); } traverse(taskTree, ''); return csvData; }
+    function exportToCSV(data, filename) { if (data.length === 0) { console.warn("No hay datos para exportar."); return; } const headers = Object.keys(data[0]).join(','); const rows = data.map(row => { return Object.values(row).map(value => { let valStr = String(value).replace(/"/g, '""'); if (valStr.includes(',')) return `"${valStr}"`; return valStr; }).join(','); }).join('\n'); const csvContent = `data:text/csv;charset=utf-8,\uFEFF${headers}\n${rows}`; const encodedUri = encodeURI(csvContent); const link = document.createElement("a"); link.setAttribute("href", encodedUri); link.setAttribute("download", filename); document.body.appendChild(link); link.click(); document.body.removeChild(link); }
+    function renderTrendAnalysis(currentData, previousData) { const trendPanel = document.getElementById('trend-analysis-container-for-export'); const kpiList = document.getElementById('kpiDeltaList'); const slippageList = document.getElementById('slippageList'); const scopeList = document.getElementById('scopeChangeList'); if (!trendPanel || !kpiList || !slippageList || !scopeList) return; trendPanel.classList.remove('hidden'); const today = new Date(); const currentFlatTasks = flattenTasks(currentData.tasks); const previousFlatTasks = flattenTasks(previousData.tasks); const currentExecTasks = currentFlatTasks.filter(t => !t.isSummary); const previousExecTasks = previousFlatTasks.filter(t => !t.isSummary); const currentKPIs = calculateKPIs(currentExecTasks, new Date(currentData.startDate), new Date(currentData.baselineEndDate), today); const previousKPIs = calculateKPIs(previousExecTasks, new Date(previousData.startDate), new Date(previousData.baselineEndDate), today); const currentOverdue = currentExecTasks.filter(t => new Date(t.end) < today && t.percentComplete < 100).length; const previousOverdue = previousExecTasks.filter(t => new Date(t.end) < today && t.percentComplete < 100).length; const currentCompleted = currentExecTasks.filter(t => t.percentComplete === 100).length; const previousCompleted = previousExecTasks.filter(t => t.percentComplete === 100).length; kpiList.innerHTML = ''; const tooltips = { endDate: "<b>¿Por qué cambia?</b> Se calcula en base al rendimiento general. Si se completaron menos tareas de las planificadas o hubo retrasos, la fecha proyectada se moverá hacia el futuro.", spi: "<b>¿Por qué cambia?</b> Compara la cantidad de tareas que deberían haberse terminado a hoy (Plan) con las que realmente se terminaron (Real). Si el número real es menor, el índice baja.", overdue: "<b>¿Por qué cambia?</b> Aumenta si las tareas no se completan antes de su fecha de fin. Disminuye a medida que esas tareas se van completando, incluso tarde.", completed: "<b>¿Por qué cambia?</b> Es un contador de tareas al 100%. El cambio muestra la productividad del equipo en el último período." }; const endDateDiff = (currentKPIs.projectedEndDate - previousKPIs.projectedEndDate) / (1000 * 60 * 60 * 24); kpiList.appendChild(createDeltaLi('Fin Proyectada', formatDate(currentKPIs.projectedEndDate), endDateDiff, 'días', true, tooltips.endDate)); const spiDiff = currentKPIs.spi - previousKPIs.spi; kpiList.appendChild(createDeltaLi('Índice SPI', currentKPIs.spi.toFixed(2), spiDiff, '', false, tooltips.spi)); const overdueDiff = currentOverdue - previousOverdue; kpiList.appendChild(createDeltaLi('Tareas Atrasadas', currentOverdue, overdueDiff, '', true, tooltips.overdue)); const completedDiff = currentCompleted - previousCompleted; kpiList.appendChild(createDeltaLi('Tareas Completadas', currentCompleted, completedDiff, '', false, tooltips.completed)); slippageList.innerHTML = ''; const previousTasksMap = new Map(previousFlatTasks.map(t => [t.id, t])); const slippedTasks = []; currentFlatTasks.forEach(currentTask => { const previousTask = previousTasksMap.get(currentTask.id); if (previousTask && (currentTask.isCritical || currentTask.isMilestone)) { const currentEndDate = new Date(currentTask.end); const previousEndDate = new Date(previousTask.end); if (currentEndDate > previousEndDate) { slippedTasks.push({task: currentTask, prevEnd: previousEndDate}); } } }); if (slippedTasks.length > 0) { slippedTasks.forEach(slip => { const li = document.createElement('li'); li.className = 'flex items-start text-xs'; li.innerHTML = ` <i data-lucide="chevrons-right" class="w-4 h-4 text-orange-400 shrink-0 mr-2"></i> <div> <span class="font-semibold">${slip.task.name}</span> <span class="block text-orange-400">Desvío de ${formatDate(slip.prevEnd)} a ${formatDate(slip.task.end)}</span> </div>`; slippageList.appendChild(li); }); } else { slippageList.innerHTML = `<li class="flex items-center text-sm text-green-400"><i data-lucide="thumbs-up" class="w-4 h-4 shrink-0 mr-2"></i>Sin desvíos en tareas clave.</li>`; } scopeList.innerHTML = ''; const currentTaskIds = new Set(currentFlatTasks.map(t => t.id)); const previousTaskIds = new Set(previousFlatTasks.map(t => t.id)); const newTasks = currentFlatTasks.filter(t => !previousTaskIds.has(t.id)); const removedTasks = previousFlatTasks.filter(t => !currentTaskIds.has(t.id)); scopeList.innerHTML = ` <li class="flex items-center justify-between"><span>Tareas Nuevas:</span> <span class="font-bold text-lg text-blue-400">${newTasks.length}</span></li> <li class="flex items-center justify-between"><span>Tareas Eliminadas:</span> <span class="font-bold text-lg text-gray-400">${removedTasks.length}</span></li> `; lucide.createIcons(); }
+    function createDeltaLi(label, value, delta, unit = '', higherIsWorse = false, tooltipText = '') { const li = document.createElement('li'); li.className = 'flex items-center justify-between cursor-pointer'; li.dataset.tooltipText = tooltipText.replace(/"/g, '&quot;'); let deltaText = ''; let colorClass = 'text-gray-400'; if (delta !== 0) { const sign = delta > 0 ? '+' : ''; colorClass = (delta > 0) ? (higherIsWorse ? 'text-red-400' : 'text-green-400') : (higherIsWorse ? 'text-green-400' : 'text-red-400'); deltaText = `(${sign}${delta.toFixed(2).replace(/\.00$/, '')} ${unit})`; } li.innerHTML = ` <span>${label}:</span> <span class="font-bold text-lg">${value} <span class="text-xs ${colorClass}">${deltaText}</span></span> `; return li; }
+    
+    lucide.createIcons();
+    </script>
+
+<script>
+(function(){
+  // ===== Robust hide of legacy hero =====
+  function hideLegacyHero(){
+    const matchers = [
+      (h)=> (h.textContent||'').toUpperCase().includes('ARRASTRA O SELECCIONA EL ARCHIVO ACTUAL'),
+      (h)=> (h.textContent||'').toUpperCase().includes('ESTE ES EL ARCHIVO XML DE MS PROJECT'),
+    ];
+    const hs = Array.from(document.querySelectorAll('h1,h2,h3'));
+    for(const h of hs){
+      if(matchers.some(fn=>fn(h))){
+        const hero = h.closest('section') || h.closest('div');
+        if(hero){
+          hero.classList.add('legacy-upload-hero');
+          hero.style.display='none';
+        }
+      }
+    }
+  }
+  if(document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', hideLegacyHero);
+  } else { hideLegacyHero(); }
+
+  // ===== Steps logic =====
+  const steps = document.getElementById('stepsInlinePro');
+  if(!steps) return;
+
+  const inputActual   = document.getElementById('currentFile');
+  const inputAnterior = document.getElementById('previousFile');
+  const btnGenerar    = document.getElementById('generate-report-btn');
+
+  const s1 = document.getElementById('inStep1');
+  const s2 = document.getElementById('inStep2');
+  const s3 = document.getElementById('inStep3');
+
+  const s1File = document.getElementById('inS1File');
+  const s2File = document.getElementById('inS2File');
+
+  const s1State = document.getElementById('inS1State');
+  const s2State = document.getElementById('inS2State');
+  const s3State = document.getElementById('inS3State');
+
+  const select1 = document.getElementById('inS1Select');
+  const select2 = document.getElementById('inS2Select');
+  const skip2   = document.getElementById('inS2Skip');
+  const gen     = document.getElementById('inGenerate');
+
+  const drop1   = document.getElementById('drop1');
+  const drop2   = document.getElementById('drop2');
+
+  function accent(){
+    const r = getComputedStyle(document.documentElement);
+    return r.getPropertyValue('--bl-dorado') || r.getPropertyValue('--brand-accent') || '#F2D157';
+  }
+  function setState(card, chip, state){
+    card.classList.remove('opacity-60','ring-2','card-done','card-skip');
+    card.style.removeProperty('--tw-ring-color');
+    if(state==='disabled'){ card.classList.add('opacity-60'); chip.textContent='bloqueado'; }
+    if(state==='current'){ card.classList.add('ring-2'); card.style.setProperty('--tw-ring-color', accent()); chip.textContent='en curso'; }
+    if(state==='done'){ card.classList.add('card-done'); chip.textContent='listo'; }
+    if(state==='skip'){ card.classList.add('card-skip'); chip.textContent='saltado'; }
+  }
+  function enableGenerateIfReady(){
+    const ok = !!(inputActual?.files && inputActual.files[0]);
+    if(ok){ gen.removeAttribute('disabled'); setState(s3, s3State, 'current'); }
+    else  { gen.setAttribute('disabled',''); setState(s3, s3State, 'disabled'); }
+  }
+  function setInputFiles(input, files){
+    try{
+      const dt = new DataTransfer();
+      for (let i=0;i<files.length;i++) dt.items.add(files[i]);
+      input.files = dt.files;
+      // Trigger the existing handleFileSelection logic via change event
+      input.dispatchEvent(new Event('change', { bubbles: true })); 
+    }catch(e){ console.warn('No se pudieron asignar los archivos al input:', e); }
+  }
+  function wireDrop(dropEl, input, labelEl){
+    ['dragenter','dragover'].forEach(evt => dropEl.addEventListener(evt,(e)=>{
+      e.preventDefault(); e.stopPropagation();
+      dropEl.classList.add('ring-2'); dropEl.style.setProperty('--tw-ring-color', accent());
+      if(e.dataTransfer) e.dataTransfer.dropEffect='copy';
+    }));
+    ;['dragleave','drop'].forEach(evt => dropEl.addEventListener(evt,(e)=>{
+      e.preventDefault(); e.stopPropagation();
+      dropEl.classList.remove('ring-2'); dropEl.style.removeProperty('--tw-ring-color');
+    }));
+    dropEl.addEventListener('drop',(e)=>{
+      const files = e.dataTransfer?.files;
+      if(files && files.length){
+        setInputFiles(input, files);
+        labelEl.textContent = files[0].name;
+      }
+    });
+  }
+
+  // Buttons
+  select1?.addEventListener('click', ()=> inputActual?.click());
+  select2?.addEventListener('click', ()=> inputAnterior?.click());
+  skip2?.addEventListener('click', ()=>{
+    localStorage.setItem('__inline_prev_skipped__','1');
+    setState(s2, s2State, 'skip');
+    s2File.textContent = 'Saltado.';
+    enableGenerateIfReady();
+    // Clear previous file input state (IMPORTANT: uses setInputFiles utility)
+    setInputFiles(inputAnterior, []); 
+  });
+  gen?.addEventListener('click', ()=>{
+    if(inputActual?.files && inputActual.files[0]){
+      // Trigger the main generation logic
+      btnGenerar?.click(); 
+      document.getElementById('stepsInlinePro')?.classList.add('hidden');
+    }
+  });
+
+  // DnD
+  if(drop1 && inputActual) wireDrop(drop1, inputActual, s1File);
+  if(drop2 && inputAnterior) wireDrop(drop2, inputAnterior, s2File);
+
+  // React to native changes
+  inputActual?.addEventListener('change', ()=>{
+    if(inputActual.files && inputActual.files[0]){
+      setState(s1, s1State, 'done');
+      s1File.textContent = inputActual.files[0].name;
+      setState(s2, s2State, 'current');
+      enableGenerateIfReady();
+    }else{
+      setState(s1, s1State, 'current');
+      s1File.textContent = 'Ningún archivo seleccionado.';
+      setState(s2, s2State, 'disabled');
+      setState(s3, s3State, 'disabled');
+      gen.setAttribute('disabled','');
+    }
+  });
+  inputAnterior?.addEventListener('change', ()=>{
+    if(inputAnterior.files && inputAnterior.files[0]){
+      localStorage.removeItem('__inline_prev_skipped__');
+      setState(s2, s2State, 'done');
+      s2File.textContent = inputAnterior.files[0].name;
+    }else if (!localStorage.getItem('__inline_prev_skipped__')){
+        // If file input is cleared and not explicitly skipped, keep it current/pending
+      setState(s2, s2State, 'current');
+      s2File.textContent = 'No cargado.';
+    }
+  });
+
+  // Initial
+  setState(s1, s1State, 'current');
+  setState(s2, s2State, 'disabled');
+  setState(s3, s3State, 'disabled');
+  setTimeout(()=>{
+    if(inputActual?.files && inputActual.files[0]){
+      setState(s1, s1State, 'done'); s1File.textContent = inputActual.files[0].name; setState(s2, s2State, 'current'); enableGenerateIfReady();
+    }
+    if(inputAnterior?.files && inputAnterior.files[0]){
+      setState(s2, s2State, 'done'); s2File.textContent = inputAnterior.files[0].name;
+    } else if (localStorage.getItem('__inline_prev_skipped__')==='1'){
+      setState(s2, s2State, 'skip'); s2File.textContent = 'Saltado.';
+    }
+  }, 0);
+
+  // ===== Branding: same-size logo + restore =====
+  (function(){
+    const logo = document.getElementById('custom-logo');
+    if(!logo) return;
+    // Lock current box size as CSS vars so any new image uses exact same box
+    function lockLogoBox(){
+      const r = logo.getBoundingClientRect();
+      if(r.width && r.height){
+        document.documentElement.style.setProperty('--logo-w', r.width+'px');
+        document.documentElement.style.setProperty('--logo-h', r.height+'px');
+      }
+    }
+    // Initial lock (after image loads)
+    if(logo.complete){ lockLogoBox(); } else { logo.addEventListener('load', lockLogoBox, {once:true}); }
+
+    const DEFAULT_SRC = logo.getAttribute('data-default-src') || logo.src;
+
+    // Build/ensure Restore button in Config near the logo upload control
+    function ensureRestoreBtn(){
+      let restore = document.getElementById('logo-restore-btn');
+      if(!restore){
+        restore = document.createElement('button');
+        restore.id = 'logo-restore-btn';
+        restore.className = 'btn';
+        restore.textContent = 'Restaurar logo por defecto';
+        // try to place next to label[for="logo-upload-input"]
+        const label = document.querySelector('label[for="logo-upload-input"]');
+        if(label && label.parentElement){
+          let wrap = label.parentElement.querySelector('.brand-actions');
+          if(!wrap){
+            wrap = document.createElement('div');
+            wrap.className = 'brand-actions mt-2 flex gap-2';
+            label.parentElement.appendChild(wrap);
+          }
+          wrap.appendChild(restore);
+        } else {
+          // fallback: append near the logo
+          logo.parentElement && logo.parentElement.appendChild(restore);
+        }
+      }
+      restore.addEventListener('click', ()=>{
+        try{
+          localStorage.removeItem('customLogo');
+          logo.src = DEFAULT_SRC;
+          // show default brand texts if any were hidden
+          document.getElementById('brand-text')?.classList.remove('hidden');
+          document.querySelector('.brand-subtitle')?.classList.remove('hidden');
+        }catch(e){ console.warn('No se pudo restaurar el logo:', e); }
+      }, {once:false});
+    }
+    ensureRestoreBtn();
+
+    // Apply custom from localStorage on load
+    const saved = localStorage.getItem('customLogo');
+    if(saved){
+      logo.src = saved;
+      document.getElementById('brand-text')?.classList.add('hidden');
+      document.querySelector('.brand-subtitle')?.classList.add('hidden');
+    }
+
+    // Wire file upload input
+    const fileInput = document.getElementById('logo-upload-input');
+    if(fileInput){
+      fileInput.addEventListener('change', (e)=>{
+        const f = e.target.files && e.target.files[0];
+        if(!f) return;
+        const reader = new FileReader();
+        reader.onload = function(evt){
+          const dataURL = evt.target?.result;
+          if(!dataURL) return;
+          // Lock current box size before swap
+          lockLogoBox();
+          logo.src = dataURL;
+          localStorage.setItem('customLogo', dataURL);
+          document.getElementById('brand-text')?.classList.add('hidden');
+          document.querySelector('.brand-subtitle')?.classList.add('hidden');
+        };
+        reader.readAsDataURL(f);
+      });
+    }
+  })();
+})();
+</script>
+
+<script>
+// --- Utils ---
+function _pad(n){return String(n).padStart(2,'0');}
+function _fmt(iso){
+    if(!iso) return 'N/D';
+    const d=new Date(iso);
+    return `${_pad(d.getDate())}.${_pad(d.getMonth()+1)}.${String(d.getFullYear()).slice(-2)} ${_pad(d.getHours())}:${_pad(d.getMinutes())}`;
+}
+
+// --- Extend parseProjectXML to capture LastSaved ---
+(function(){
+    const base=parseProjectXML;
+    window.parseProjectXML=function(xmlDoc){
+        const data=base(xmlDoc);
+        let lastSaved='';
+        Array.from(xmlDoc.getElementsByTagName('*')).forEach(el=>{
+            if(el.localName==='LastSaved'){ lastSaved=el.textContent;}
+        });
+        data.lastSaved=lastSaved;
+        return data;
+    };
+})();
+
+// --- Create branded Inicio button once dashboard shown ---
+function ensureInicioButton(){
+    if(document.getElementById('btnReturnHome')) return;
+    const btn=document.createElement('button');
+    btn.id='btnReturnHome';
+    const root=getComputedStyle(document.documentElement);
+    btn.style.backgroundColor=root.getPropertyValue('--bl-dorado').trim()||'#B1A96E';
+    btn.style.color=root.getPropertyValue('--bl-azul-oscuro').trim()||'#0D2240';
+    btn.className='fixed bottom-4 left-4 z-50 px-5 py-3 rounded-lg font-bold flex items-center gap-2 shadow-lg hover:opacity-90 transition';
+    btn.innerHTML=`<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 19l-7-7 7-7"/></svg><span>Inicio</span>`;
+    btn.addEventListener('click',()=>location.reload());
+    document.body.appendChild(btn);
+}
+
+// --- Inject last modification dates and create button inside processAndRenderDashboard ---
+(function(){
+    const base=processAndRenderDashboard;
+    window.processAndRenderDashboard=function(data, prev=null){
+        base.apply(this, arguments);
+
+        // Show last saved info
+        const title=document.getElementById('projectName');
+        if(title){
+            let holder=document.getElementById('lastSavedHolder');
+            if(!holder){
+                holder=document.createElement('div');
+                holder.id='lastSavedHolder';
+                holder.className='space-y-0.5';
+                title.parentNode.insertBefore(holder, title.nextSibling);
+            }else{ holder.innerHTML=''; }
+
+            const pCur=document.createElement('p');
+            pCur.className='text-[--bl-dorado] font-semibold text-sm';
+            pCur.textContent='Última modificación (actual): '+_fmt(data.lastSaved);
+            holder.appendChild(pCur);
+
+            if(prev && prev.lastSaved){
+                const pPrev=document.createElement('p');
+                pPrev.className='text-[--bl-dorado]/80 font-medium text-sm';
+                pPrev.textContent='Última modificación (anterior): '+_fmt(prev.lastSaved);
+                holder.appendChild(pPrev);
+            }
+        }
+
+        ensureInicioButton();
+    };
+})();
+
+// --- Remove Inicio button when on initial page ---
+document.addEventListener('DOMContentLoaded', ()=>{
+    const dash=document.getElementById('dashboardSection');
+    if(dash && dash.classList.contains('hidden')){
+        const btn=document.getElementById('btnReturnHome');
+        if(btn) btn.remove();
+    }
+});
+</script>
+
+
+<script>
+// 1. Enhance parseProjectXML to include overallProgress and plannedProgress
+(function(){
+    const base=parseProjectXML;
+    window.parseProjectXML=function(xmlDoc){
+        const data=base(xmlDoc);
+        // Detect summary task UID 0
+        const get=(el,tag)=>el.getElementsByTagName(tag)[0]?.textContent||'';
+        const tasks=Array.from(xmlDoc.getElementsByTagName('Task'));
+        let overall=0, planned=0;
+        tasks.forEach(t=>{
+            if(get(t,'UID')==='0'){
+                overall=parseFloat(get(t,'PercentComplete'))||0;
+                const ext=Array.from(t.getElementsByTagName('ExtendedAttribute')).find(e=>get(e,'FieldID')==='188743731');
+                if(ext){ planned=parseFloat(get(ext,'Value').replace('%',''))||0; }
+            }
+        });
+        data.overallProgress=overall;
+        data.plannedProgress=planned;
+        return data;
+    };
+})();
+
+// 2. Override renderGauges to rename labels
+(function(){
+    const baseRG=renderGauges;
+    window.renderGauges=function(real,plan){
+        baseRG(real,plan);
+        setTimeout(()=>{
+            document.querySelectorAll('text').forEach(el=>{
+                const txt=el.textContent.trim();
+                if(txt==='Progreso General') el.textContent='% Avance Real';
+                if(txt==='Tiempo Transcurrido') el.textContent='% Avance Plan';
+            });
+        },0);
+    };
+})();
+
+// 3. Wrap processAndRenderDashboard to feed plannedProgress and keep button/date logic
+(function(){
+    const baseProc=processAndRenderDashboard;
+    window.processAndRenderDashboard=function(data, prev=null){
+        baseProc.apply(this, arguments);
+        // Re-render gauges with real-plan pair from XML values
+        if(typeof renderGauges==='function'){
+            renderGauges(data.overallProgress, data.plannedProgress);
+        }
+
+        // --- NEW --- Show export snapshot button
+        const exportBtn = document.getElementById('export-snapshot-btn');
+        if (exportBtn) {
+            exportBtn.classList.remove('hidden');
+        }
+
+        // Ensure Inicio button exists
+        if(!document.getElementById('btnReturnHome')){
+            const root=getComputedStyle(document.documentElement);
+            const btn=document.createElement('button');
+            btn.id='btnReturnHome';
+            btn.className='fixed bottom-4 left-4 z-50 px-5 py-3 rounded-lg font-bold flex items-center gap-2 shadow-lg hover:opacity-90';
+            btn.style.backgroundColor=root.getPropertyValue('--bl-dorado').trim()||'#B1A96E';
+            btn.style.color=root.getPropertyValue('--bl-azul-oscuro').trim()||'#0D2240';
+            btn.innerHTML='<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 19l-7-7 7-7"/></svg><span>Inicio</span>';
+            btn.addEventListener('click', ()=>location.reload());
+            document.body.appendChild(btn);
+        }
+    };
+})();
+</script>
+
+<!-- Lógica de Importación/Exportación de Snapshot (Original) -->
+<script>
+// --- SNAPSHOT FUNCTIONALITY ---
+
+/**
+ * Exports the current dashboard state to a JSON file.
+ */
+function exportDashboardSnapshot() {
+    if (!projectDataStore || !projectDataStore.name) {
+        // Replaced alert
+        const contentArea = document.getElementById('executive-summary-content');
+        contentArea.innerHTML = `<p class="text-yellow-400 font-semibold">No hay datos de proyecto cargados para exportar la instantánea.</p>`;
+        return;
+    }
+
+    // Helper to prepare a data store for JSON serialization.
+    // It converts the 'resources' Map into a serializable array.
+    const prepareStoreForExport = (store) => {
+        if (!store) return null;
+        const storeCopy = { ...store };
+        if (store.resources instanceof Map) {
+            storeCopy.resources = Array.from(store.resources.entries());
+        }
+        return storeCopy;
+    };
+
+    const snapshot = {
+        metadata: {
+            version: '1.1', // Version indicates it includes UI state
+            projectName: projectDataStore.name,
+            exportedAt: new Date().toISOString()
+        },
+        projectDataStore: prepareStoreForExport(projectDataStore),
+        previousProjectDataStore: prepareStoreForExport(previousProjectDataStore),
+        uiState: {
+            ganttViewMode,
+            burnupViewMode,
+            ganttMainView,
+            ganttSearchTerm,
+            ganttResourceFilter,
+            ganttIsolationFilter,
+            ganttStartDate: document.getElementById('ganttStartDate').value,
+            ganttEndDate: document.getElementById('ganttEndDate').value,
+            burnupStartDate: document.getElementById('burnupStartDate').value,
+            burnupEndDate: document.getElementById('burnupEndDate').value,
+            upcomingDays: document.getElementById('upcoming-days').value
+        }
+    };
+
+    try {
+        const dataStr = JSON.stringify(snapshot, null, 2);
+        const dataBlob = new Blob([dataStr], {type: "application/json"});
+        const url = URL.createObjectURL(dataBlob);
+
+        const link = document.createElement('a');
+        const safeName = projectDataStore.name.replace(/[^a-z0-9]/gi, '_').toLowerCase();
+        const dateStamp = new Date().toISOString().split('T')[0];
+        link.download = `blatorh_snapshot_${safeName}_${dateStamp}.json`;
+        link.href = url;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+    } catch (error) {
+        console.error("Error creating snapshot JSON:", error);
+        const contentArea = document.getElementById('executive-summary-content');
+        contentArea.innerHTML = `<p class="text-red-400 font-semibold">Hubo un error al generar el archivo de instantánea.</p>`;
+    }
+}
+
+/**
+ * Restores the UI controls to a previously saved state.
+ * @param {object} uiState The state object from the snapshot.
+ */
+function restoreUiControlsState(uiState) {
+    try {
+        // Restore simple input values
+        document.getElementById('gantt-search').value = uiState.ganttSearchTerm || '';
+        document.getElementById('gantt-resource-filter').value = uiState.ganttResourceFilter || 'all';
+        document.getElementById('upcoming-days').value = uiState.upcomingDays || '7';
+
+        // Restore date ranges
+        document.getElementById('ganttStartDate').value = uiState.ganttStartDate;
+        document.getElementById('ganttEndDate').value = uiState.ganttEndDate;
+        document.getElementById('burnupStartDate').value = uiState.burnupStartDate;
+        document.getElementById('burnupEndDate').value = uiState.burnupEndDate;
+
+        // Helper to update active classes on toggle button groups
+        const updateToggles = (selector, activeValue) => {
+            document.querySelectorAll(selector).forEach(btn => {
+                const key = btn.dataset.view || btn.dataset.filter;
+                btn.classList.toggle('active', key === activeValue);
+            });
+        };
+
+        // Restore all toggle states
+        updateToggles('#gantt-timescale-toggle .gantt-view-btn', uiState.ganttViewMode);
+        updateToggles('#gantt-main-view-toggle .gantt-view-btn', uiState.ganttMainView);
+        updateToggles('#gantt-isolation-filter .gantt-view-btn', uiState.ganttIsolationFilter);
+        updateToggles('#burnup-view-toggle .gantt-view-btn', uiState.burnupViewMode);
+        
+        // Re-render the main views to apply all restored states and filters
+        // This is crucial for the Gantt, Network Diagram, etc., to update visually.
+        filterAndRenderViews();
+        filterAndRenderBurnup(flattenTasks(projectDataStore.tasks).filter(t => !t.isSummary));
+        renderUpcomingTasks(parseInt(uiState.upcomingDays || '7', 10), uiState.ganttIsolationFilter || 'all');
+
+    } catch (error) {
+        console.warn("Could not fully restore UI state, some controls might be at default:", error);
+    }
+}
+
+
+/**
+ * Handles the snapshot file import process.
+ * @param {Event} event The file input change event.
+ */
+function importDashboardSnapshot(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        try {
+            const snapshot = JSON.parse(e.target.result);
+
+            // Validation for new version
+            if (!snapshot.projectDataStore || !snapshot.metadata?.version || !snapshot.metadata.version.startsWith('1.')) {
+                // Replaced alert
+                const contentArea = document.getElementById('executive-summary-content');
+                contentArea.innerHTML = `<p class="text-red-400 font-semibold">El archivo de instantánea no es válido, está corrupto o es de una versión incompatible.</p>`;
+                return;
+            }
+
+            // Helper to restore Maps from arrays
+            const restoreStoreFromImport = (storeData) => {
+                if (!storeData) return null;
+                if (Array.isArray(storeData.resources)) {
+                    storeData.resources = new Map(storeData.resources);
+                }
+                return storeData;
+            };
+
+            // Assign data to global variables
+            projectDataStore = restoreStoreFromImport(snapshot.projectDataStore);
+            previousProjectDataStore = restoreStoreFromImport(snapshot.previousProjectDataStore) || null;
+            
+            // Restore UI state variables from snapshot
+            if (snapshot.uiState) {
+                ganttViewMode = snapshot.uiState.ganttViewMode || 'day';
+                burnupViewMode = snapshot.uiState.burnupViewMode || 'week';
+                ganttMainView = snapshot.uiState.ganttMainView || 'gantt';
+                ganttSearchTerm = snapshot.uiState.ganttSearchTerm || '';
+                ganttResourceFilter = snapshot.uiState.ganttResourceFilter || 'all';
+                ganttIsolationFilter = snapshot.uiState.ganttIsolationFilter || 'all';
+            }
+
+            // Hide all upload sections and show dashboard
+            const stepsContainer = document.getElementById('stepsInlinePro');
+            const legacyContainer = document.getElementById('uploadSection');
+            const dashboardContainer = document.getElementById('dashboardSection');
+            
+            if (stepsContainer) {
+                 stepsContainer.style.transition = 'opacity 0.5s';
+                 stepsContainer.style.opacity = '0';
+            }
+            if (legacyContainer) {
+                legacyContainer.style.display = 'none';
+            }
+
+            setTimeout(() => {
+                if (stepsContainer) stepsContainer.classList.add('hidden');
+                dashboardContainer.classList.remove('hidden');
+                setTimeout(() => {
+                    dashboardContainer.classList.remove('opacity-0');
+                    
+                    // Call the main rendering function which sets up the structure
+                    processAndRenderDashboard(projectDataStore, previousProjectDataStore);
+                    
+                    // AFTER rendering, apply the restored UI state to the controls
+                    if (snapshot.uiState) {
+                        restoreUiControlsState(snapshot.uiState);
+                    }
+                }, 50);
+
+            }, 500);
+
+        } catch (error) {
+            console.error("Error al importar la instantánea:", error);
+            // Replaced alert
+            const contentArea = document.getElementById('executive-summary-content');
+            contentArea.innerHTML = `<p class="text-red-400 font-semibold">Error al procesar el archivo JSON. Asegúrate de que el formato es correcto.</p>`;
+        } finally {
+            // Reset file input to allow re-uploading the same file
+            event.target.value = '';
+        }
+    };
+    reader.readAsText(file);
+}
+
+// Add event listeners for snapshot buttons
+function initializeSnapshotButtons() {
+    // Import
+    const importBtn = document.getElementById('import-snapshot-btn');
+    const importInput = document.getElementById('snapshot-import-input');
+    if (importBtn && importInput) {
+        importBtn.addEventListener('click', () => importInput.click());
+        importInput.addEventListener('change', importDashboardSnapshot);
+    }
+
+    // Export (Button is in the header)
+    const exportBtn = document.getElementById('export-snapshot-btn');
+    if (exportBtn) {
+        exportBtn.addEventListener('click', exportDashboardSnapshot);
+    }
+}
+
+// Wait for the DOM to be fully loaded before attaching events
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initializeSnapshotButtons);
+} else {
+    initializeSnapshotButtons();
+}
+</script>
+
+</body>
+</html>
